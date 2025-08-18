@@ -27,21 +27,24 @@ export function CuratorSelect({ value, onChange, curators, className }: CuratorS
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Get unique curators from all rows
-  const uniqueCurators = curators.reduce((acc, rowCurators) => {
-    Object.values(rowCurators).forEach(curator => {
-      if (!acc.some(c => c.name === curator.name)) {
-        acc.push(curator);
-      }
-    });
-    return acc;
-  }, [] as DisplayableCurators[string][]);
+  const uniqueCurators = curators.reduce(
+    (acc, rowCurators) => {
+      Object.values(rowCurators).forEach((curator) => {
+        if (!acc.some((c) => c.name === curator.name)) {
+          acc.push(curator);
+        }
+      });
+      return acc;
+    },
+    [] as DisplayableCurators[string][],
+  );
 
   // Sort curators alphabetically by name
   uniqueCurators.sort((a, b) => a.name.localeCompare(b.name));
 
   // Filter curators based on search term
-  const filteredCurators = uniqueCurators.filter(curator =>
-    curator.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCurators = uniqueCurators.filter((curator) =>
+    curator.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Auto-focus search input when dropdown opens
@@ -54,8 +57,8 @@ export function CuratorSelect({ value, onChange, curators, className }: CuratorS
   }, [isOpen]);
 
   return (
-    <Select 
-      value={value} 
+    <Select
+      value={value}
       onValueChange={onChange}
       open={isOpen}
       onOpenChange={(open) => {
@@ -68,14 +71,14 @@ export function CuratorSelect({ value, onChange, curators, className }: CuratorS
       </SelectTrigger>
       <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
         <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute left-2 top-2.5 h-4 w-4" />
           <Input
             ref={searchInputRef}
             type="text"
             placeholder="Search curators..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 mb-2"
+            className="mb-2 pl-8"
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 setIsOpen(false);
@@ -102,7 +105,7 @@ export function CuratorSelect({ value, onChange, curators, className }: CuratorS
           </SelectItem>
         ))}
         {filteredCurators.length === 0 && searchTerm && (
-          <div className="px-2 py-3 text-sm text-muted-foreground">No curators found</div>
+          <div className="text-muted-foreground px-2 py-3 text-sm">No curators found</div>
         )}
       </SelectContent>
     </Select>

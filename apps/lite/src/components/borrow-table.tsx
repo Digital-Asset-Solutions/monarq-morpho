@@ -17,13 +17,12 @@ import { CheckCheck, Copy, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 import { type Chain, type Hex, type Address } from "viem";
 
-import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
-
 import { BorrowSheetContent } from "@/components/borrow-sheet-content";
-import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { BorrowTableHeader, type BorrowTableFilters } from "@/components/filters/borrow-table-header";
-import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
+import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { useBorrowFilters } from "@/hooks/use-borrow-filters";
+import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { SHARED_LIQUIDITY_DOCUMENTATION } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
 
@@ -308,119 +307,115 @@ export function BorrowTable({
   const sortedMarkets = useSorting(filteredMarkets, sort, getSortValue);
 
   return (
-      <div className="md:w-full w-[calc(100vw-50px)]">
-      <BorrowTableHeader
-        filters={filters}
-        onFiltersChange={setFilters}
-        tokens={tokens}
-      />
+    <div className="w-[calc(100vw-50px)] md:w-full">
+      <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
       <Table className="overflow-x-auto">
-      <TableHeader className="bg-primary border-b border-border">
-        <TableRow>
-          <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
-          <SortableTableHead 
-            sortKey="lltv"
-            currentSort={sort}
-            onSort={handleSort}
-            className="text-primary-foreground text-xs font-light"
-          >
-            LLTV
-          </SortableTableHead>
-          <SortableTableHead 
-            sortKey="liquidity"
-            currentSort={sort}
-            onSort={handleSort}
-            className="text-primary-foreground text-xs font-light"
-          >
-            <div className="flex items-center gap-1">
-              Liquidity
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-4" />
-                  </TooltipTrigger>
-                  <TooltipContent className="text-primary-foreground max-w-56 rounded-3xl p-4 text-xs shadow-2xl">
-                    This value will be smaller than that of the full app. It doesn't include{" "}
-                    <a
-                      className="underline"
-                      href={SHARED_LIQUIDITY_DOCUMENTATION}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      shared liquidity
-                    </a>{" "}
-                    which could be reallocated to this market after you borrow.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </SortableTableHead>
-          <SortableTableHead 
-            sortKey="rate"
-            currentSort={sort}
-            onSort={handleSort}
-            className="text-primary-foreground text-xs font-light"
-          >
-            Rate
-          </SortableTableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Vault Listing</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedMarkets.map((market) => (
-          <Sheet
-            key={market.id}
-            onOpenChange={(isOpen) => {
-              // Refetch positions on sidesheet close, since user may have sent txns to modify one
-              if (!isOpen) void refetchPositions();
-            }}
-          >
-            <SheetTrigger asChild>
-              <TableRow className="hover:bg-primary border-b border-border">
-                <TableCell className="py-3">
-                  <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
-                </TableCell>
-                <TableCell>
-                  <TokenTableCell {...tokens.get(market.params.loanToken)!} chain={chain} />
-                </TableCell>
-                <TableCell>{formatLtv(market.params.lltv)}</TableCell>
-                <TableCell>
-                  {tokens.get(market.params.loanToken)?.decimals !== undefined
-                    ? formatBalanceWithSymbol(
-                        market.liquidity,
-                        tokens.get(market.params.loanToken)!.decimals!,
-                        tokens.get(market.params.loanToken)!.symbol,
-                        5,
-                        true,
-                      )
-                    : "－"}
-                </TableCell>
-                <TableCell>
-                  <ApyTableCell
-                    nativeApy={market.borrowApy}
-                    rewards={borrowingRewards.get(market.id) ?? []}
-                    mode="owe"
-                  />
-                </TableCell>
-                <TableCell>
-                  <VaultsTableCell
-                    token={tokens.get(market.params.loanToken)!}
-                    vaults={marketVaults.get(market.params.id) ?? []}
-                    chain={chain}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IdTableCell marketId={market.id} />
-                </TableCell>
-              </TableRow>
-            </SheetTrigger>
-            <BorrowSheetContent marketId={market.id} marketParams={market.params} imarket={market} tokens={tokens} />
-          </Sheet>
-        ))}
-      </TableBody>
-    </Table>
+        <TableHeader className="bg-primary border-border border-b">
+          <TableRow>
+            <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
+            <SortableTableHead
+              sortKey="lltv"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              LLTV
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="liquidity"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              <div className="flex items-center gap-1">
+                Liquidity
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="size-4" />
+                    </TooltipTrigger>
+                    <TooltipContent className="text-primary-foreground max-w-56 rounded-3xl p-4 text-xs shadow-2xl">
+                      This value will be smaller than that of the full app. It doesn't include{" "}
+                      <a
+                        className="underline"
+                        href={SHARED_LIQUIDITY_DOCUMENTATION}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        shared liquidity
+                      </a>{" "}
+                      which could be reallocated to this market after you borrow.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="rate"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              Rate
+            </SortableTableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Vault Listing</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedMarkets.map((market) => (
+            <Sheet
+              key={market.id}
+              onOpenChange={(isOpen) => {
+                // Refetch positions on sidesheet close, since user may have sent txns to modify one
+                if (!isOpen) void refetchPositions();
+              }}
+            >
+              <SheetTrigger asChild>
+                <TableRow className="hover:bg-primary border-border border-b">
+                  <TableCell className="py-3">
+                    <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
+                  </TableCell>
+                  <TableCell>
+                    <TokenTableCell {...tokens.get(market.params.loanToken)!} chain={chain} />
+                  </TableCell>
+                  <TableCell>{formatLtv(market.params.lltv)}</TableCell>
+                  <TableCell>
+                    {tokens.get(market.params.loanToken)?.decimals !== undefined
+                      ? formatBalanceWithSymbol(
+                          market.liquidity,
+                          tokens.get(market.params.loanToken)!.decimals!,
+                          tokens.get(market.params.loanToken)!.symbol,
+                          5,
+                          true,
+                        )
+                      : "－"}
+                  </TableCell>
+                  <TableCell>
+                    <ApyTableCell
+                      nativeApy={market.borrowApy}
+                      rewards={borrowingRewards.get(market.id) ?? []}
+                      mode="owe"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <VaultsTableCell
+                      token={tokens.get(market.params.loanToken)!}
+                      vaults={marketVaults.get(market.params.id) ?? []}
+                      chain={chain}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IdTableCell marketId={market.id} />
+                  </TableCell>
+                </TableRow>
+              </SheetTrigger>
+              <BorrowSheetContent marketId={market.id} marketParams={market.params} imarket={market} tokens={tokens} />
+            </Sheet>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -475,90 +470,91 @@ export function BorrowPositionTable({
 
   return (
     <div className="w-full">
-      <BorrowTableHeader
-        filters={filters}
-        onFiltersChange={setFilters}
-        tokens={tokens}
-      />
+      <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
       <Table>
-      <TableHeader className="bg-primary border-b border-border">
-        <TableRow>
-          <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
-          <SortableTableHead 
-            sortKey="rate"
-            currentSort={sort}
-            onSort={handleSort}
-            className="text-primary-foreground text-xs font-light"
-          >
-            Rate
-          </SortableTableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Health</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedMarkets.map((market) => {
-          const collateralToken = tokens.get(market.params.collateralToken)!;
-          const loanToken = tokens.get(market.params.loanToken)!;
-          const position = positions?.get(market.id);
-
-          let collateralText = collateralToken.symbol;
-          if (position && collateralToken.decimals !== undefined) {
-            collateralText = formatBalanceWithSymbol(
-              position.collateral,
-              collateralToken.decimals,
-              collateralToken.symbol,
-              5,
-            );
-          }
-          let loanText = loanToken.symbol;
-          if (position && loanToken.decimals !== undefined) {
-            loanText = formatBalanceWithSymbol(position.borrowAssets, loanToken.decimals, loanToken.symbol, 5);
-          }
-
-          return (
-            <Sheet
-              key={market.id}
-              onOpenChange={(isOpen) => {
-                // Refetch positions on sidesheet close, since user may have sent txns to modify one
-                if (!isOpen) void refetchPositions();
-              }}
+        <TableHeader className="bg-primary border-border border-b">
+          <TableRow>
+            <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
+            <SortableTableHead
+              sortKey="rate"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
             >
-              <SheetTrigger asChild>
-                <TableRow className="hover:bg-primary border-b border-border">
-                  <TableCell className="py-3">
-                    <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
-                  </TableCell>
-                  <TableCell>
-                    <TokenTableCell {...loanToken} symbol={loanText} chain={chain} />
-                  </TableCell>
-                  <TableCell>
-                    <ApyTableCell
-                      nativeApy={market.borrowApy}
-                      rewards={borrowingRewards.get(market.id) ?? []}
-                      mode="owe"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <HealthTableCell
-                      market={market}
-                      position={position}
-                      loanToken={loanToken}
-                      collateralToken={collateralToken}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IdTableCell marketId={market.id} />
-                  </TableCell>
-                </TableRow>
-              </SheetTrigger>
-              <BorrowSheetContent marketId={market.id} marketParams={market.params} imarket={market} tokens={tokens} />
-            </Sheet>
-          );
-        })}
-      </TableBody>
-    </Table>
+              Rate
+            </SortableTableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Health</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedMarkets.map((market) => {
+            const collateralToken = tokens.get(market.params.collateralToken)!;
+            const loanToken = tokens.get(market.params.loanToken)!;
+            const position = positions?.get(market.id);
+
+            let collateralText = collateralToken.symbol;
+            if (position && collateralToken.decimals !== undefined) {
+              collateralText = formatBalanceWithSymbol(
+                position.collateral,
+                collateralToken.decimals,
+                collateralToken.symbol,
+                5,
+              );
+            }
+            let loanText = loanToken.symbol;
+            if (position && loanToken.decimals !== undefined) {
+              loanText = formatBalanceWithSymbol(position.borrowAssets, loanToken.decimals, loanToken.symbol, 5);
+            }
+
+            return (
+              <Sheet
+                key={market.id}
+                onOpenChange={(isOpen) => {
+                  // Refetch positions on sidesheet close, since user may have sent txns to modify one
+                  if (!isOpen) void refetchPositions();
+                }}
+              >
+                <SheetTrigger asChild>
+                  <TableRow className="hover:bg-primary border-border border-b">
+                    <TableCell className="py-3">
+                      <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
+                    </TableCell>
+                    <TableCell>
+                      <TokenTableCell {...loanToken} symbol={loanText} chain={chain} />
+                    </TableCell>
+                    <TableCell>
+                      <ApyTableCell
+                        nativeApy={market.borrowApy}
+                        rewards={borrowingRewards.get(market.id) ?? []}
+                        mode="owe"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <HealthTableCell
+                        market={market}
+                        position={position}
+                        loanToken={loanToken}
+                        collateralToken={collateralToken}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IdTableCell marketId={market.id} />
+                    </TableCell>
+                  </TableRow>
+                </SheetTrigger>
+                <BorrowSheetContent
+                  marketId={market.id}
+                  marketParams={market.params}
+                  imarket={market}
+                  tokens={tokens}
+                />
+              </Sheet>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }

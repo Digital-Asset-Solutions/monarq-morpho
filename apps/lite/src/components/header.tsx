@@ -26,12 +26,7 @@ function Banner(chainId: number | undefined) {
   const banner = BANNERS[chainId];
 
   return (
-    <aside
-      className={cn(
-        "flex h-10 min-h-min items-center px-2 text-sm font-light italic",
-        banner.color,
-      )}
-    >
+    <aside className={cn("flex h-10 min-h-min items-center px-2 text-sm font-light italic", banner.color)}>
       {banner.text}
       <XIcon className="hover:bg-accent mx-2 h-6 w-6 rounded-sm p-1" onClick={() => setShouldShowBanner(false)} />
     </aside>
@@ -41,18 +36,14 @@ function Banner(chainId: number | undefined) {
 export function AppSidebar({ chainId }: { chainId?: number }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
         {Banner(chainId)}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            {WORDMARK.length > 0 ? (
-              <img className="h-8" src={WORDMARK} alt="Lazarus" />
-            ) : (
-              <MorphoMenu />
-            )}
+            {WORDMARK.length > 0 ? <img className="h-8" src={WORDMARK} alt="Lazarus" /> : <MorphoMenu />}
           </div>
         </div>
       </SidebarHeader>
@@ -62,7 +53,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
       <SidebarContent className="px-5 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath === '/dashboard' || currentPath === '/'}>
+            <SidebarMenuButton asChild isActive={currentPath === "/dashboard" || currentPath === "/"}>
               <Link to="/dashboard" className="px-3 py-5">
                 <Home className="h-7 w-7" />
                 <span>Dashboard</span>
@@ -70,7 +61,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath.includes('/earn')}>
+            <SidebarMenuButton asChild isActive={currentPath.includes("/earn")}>
               <Link to="/earn" className="px-3 py-5">
                 <BarChart3 className="h-7 w-7" />
                 <span>Earn</span>
@@ -78,7 +69,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath.includes('/borrow')}>
+            <SidebarMenuButton asChild isActive={currentPath.includes("/borrow")}>
               <Link to="/borrow" className="px-3 py-5">
                 <CreditCard className="h-7 w-7" />
                 <span>Borrow</span>
@@ -94,7 +85,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
             <SidebarMenuButton asChild>
               <a href="https://vote.morpho.org/" rel="noopener noreferrer" target="_blank" className="text-sm">
                 <span>Gov</span>
-                <ArrowUpRight className="h-4 w-4 text-secondary" strokeWidth={3} />
+                <ArrowUpRight className="text-secondary h-4 w-4" strokeWidth={3} />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -102,7 +93,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
             <SidebarMenuButton asChild>
               <a href="https://docs.morpho.org/" rel="noopener noreferrer" target="_blank" className="text-sm">
                 <span>Docs</span>
-                <ArrowUpRight className="h-4 w-4 text-secondary" strokeWidth={3} />
+                <ArrowUpRight className="text-secondary h-4 w-4" strokeWidth={3} />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -115,9 +106,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
 export function AppSidebarLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden">
-        {children}
-      </div>
+      <div className="flex h-screen w-full overflow-hidden">{children}</div>
     </SidebarProvider>
   );
 }

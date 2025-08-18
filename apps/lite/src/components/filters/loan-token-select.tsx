@@ -26,7 +26,7 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const uniqueTokens = Array.from(tokens.values()).reduce((acc, token) => {
-    const existing = acc.find(t => t.address.toLowerCase() === token.address.toLowerCase());
+    const existing = acc.find((t) => t.address.toLowerCase() === token.address.toLowerCase());
     if (!existing && token.symbol) {
       acc.push(token);
     }
@@ -34,12 +34,13 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
   }, [] as Token[]);
 
   // Sort tokens alphabetically by symbol
-  uniqueTokens.sort((a, b) => (a.symbol || '').localeCompare(b.symbol || ''));
+  uniqueTokens.sort((a, b) => (a.symbol || "").localeCompare(b.symbol || ""));
 
   // Filter tokens based on search term
-  const filteredTokens = uniqueTokens.filter(token => 
-    token.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    token.address?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTokens = uniqueTokens.filter(
+    (token) =>
+      token.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      token.address?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Auto-focus search input when dropdown opens
@@ -52,8 +53,8 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
   }, [isOpen]);
 
   return (
-    <Select 
-      value={value} 
+    <Select
+      value={value}
       onValueChange={onChange}
       open={isOpen}
       onOpenChange={(open) => {
@@ -66,14 +67,14 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
       </SelectTrigger>
       <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
         <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute left-2 top-2.5 h-4 w-4" />
           <Input
             ref={searchInputRef}
             type="text"
             placeholder="Search tokens..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 mb-2"
+            className="mb-2 pl-8"
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 setIsOpen(false);
@@ -100,7 +101,7 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
           </SelectItem>
         ))}
         {filteredTokens.length === 0 && searchTerm && (
-          <div className="px-2 py-3 text-sm text-muted-foreground">No tokens found</div>
+          <div className="text-muted-foreground px-2 py-3 text-sm">No tokens found</div>
         )}
       </SelectContent>
     </Select>

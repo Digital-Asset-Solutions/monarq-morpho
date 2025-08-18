@@ -11,27 +11,21 @@ export interface SortableTableHeadProps {
   className?: string;
 }
 
-export function SortableTableHead({
-  children,
-  sortKey,
-  currentSort,
-  onSort,
-  className,
-}: SortableTableHeadProps) {
+export function SortableTableHead({ children, sortKey, currentSort, onSort, className }: SortableTableHeadProps) {
   const isActive = currentSort.column === sortKey;
   const showUpArrow = isActive && currentSort.direction === "asc";
   const showDownArrow = isActive && currentSort.direction === "desc";
 
   return (
     <TableHead
-      className={`${className} cursor-pointer hover:bg-primary/80 transition-colors select-none`}
+      className={`${className} hover:bg-primary/80 cursor-pointer select-none transition-colors`}
       onClick={() => onSort(sortKey)}
     >
       <div className="flex items-center gap-1 text-xs font-light">
         {children}
-        <div className="flex flex-col h-4 w-4 items-center justify-center">
-          <ChevronUp className={`h-3 w-3 ${showUpArrow ? 'opacity-100' : 'opacity-30'}`} />
-          <ChevronDown className={`h-3 w-3 -mt-1 ${showDownArrow ? 'opacity-100' : 'opacity-30'}`} />
+        <div className="flex h-4 w-4 flex-col items-center justify-center">
+          <ChevronUp className={`h-3 w-3 ${showUpArrow ? "opacity-100" : "opacity-30"}`} />
+          <ChevronDown className={`-mt-1 h-3 w-3 ${showDownArrow ? "opacity-100" : "opacity-30"}`} />
         </div>
       </div>
     </TableHead>
@@ -41,7 +35,7 @@ export function SortableTableHead({
 export function useSorting<T>(
   data: T[],
   sortConfig: { column: string | null; direction: SortDirection },
-  getSortValue: (item: T, column: string) => number
+  getSortValue: (item: T, column: string) => number,
 ) {
   if (!sortConfig.column || !sortConfig.direction) {
     return data;
@@ -61,7 +55,7 @@ export function useSorting<T>(
 
 export function createSortHandler(
   currentSort: { column: string | null; direction: SortDirection },
-  setSort: (sort: { column: string | null; direction: SortDirection }) => void
+  setSort: (sort: { column: string | null; direction: SortDirection }) => void,
 ) {
   return (column: string) => {
     if (currentSort.column === column) {

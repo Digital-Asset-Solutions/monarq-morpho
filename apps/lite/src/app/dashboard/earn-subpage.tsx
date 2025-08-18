@@ -232,26 +232,24 @@ export function EarnSubPage() {
 
   return (
     <div className="flex min-h-full flex-col px-2.5">
-      {
-        userRows.length > 0 && (
-          <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
-            <EarnTable
-              chain={chain}
-              rows={userRows}
-              depositsMode="userAssets"
-              tokens={tokens}
-              lendingRewards={lendingRewards}
-              refetchPositions={refetchBalanceOf}
-            />
-          </div>
-        )
-      }
+      {userRows.length > 0 && (
+        <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
+          <EarnTable
+            chain={chain}
+            rows={userRows}
+            depositsMode="userAssets"
+            tokens={tokens}
+            lendingRewards={lendingRewards}
+            refetchPositions={refetchBalanceOf}
+          />
+        </div>
+      )}
       {/*
       Outer div ensures background color matches the end of the gradient from the div above,
       allowing rounded corners to show correctly. Inner div defines rounded corners and table background.
       */}
       <div className="flex grow flex-col">
-        <div className="bg-background flex h-full grow justify-center rounded-xl pb-16 border border-border/50 shadow-sm">
+        <div className="bg-background border-border/50 flex h-full grow justify-center rounded-xl border pb-16 shadow-sm">
           <EarnTable
             chain={chain}
             rows={rows}

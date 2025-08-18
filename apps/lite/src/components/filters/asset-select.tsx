@@ -22,13 +22,20 @@ interface AssetSelectProps {
   customAllPlaceholder?: string;
 }
 
-export function AssetSelect({ value, onChange, tokens, placeholder, className, customAllPlaceholder = "All Assets" }: AssetSelectProps) {
+export function AssetSelect({
+  value,
+  onChange,
+  tokens,
+  placeholder,
+  className,
+  customAllPlaceholder = "All Assets",
+}: AssetSelectProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const uniqueTokens = Array.from(tokens.values()).reduce((acc, token) => {
-    const existing = acc.find(t => t.address?.toLowerCase() === token.address?.toLowerCase());
+    const existing = acc.find((t) => t.address?.toLowerCase() === token.address?.toLowerCase());
     if (!existing && token.symbol) {
       acc.push(token);
     }
@@ -36,12 +43,13 @@ export function AssetSelect({ value, onChange, tokens, placeholder, className, c
   }, [] as Token[]);
 
   // Sort tokens alphabetically by symbol
-  uniqueTokens.sort((a, b) => (a.symbol || '').localeCompare(b.symbol || ''));
+  uniqueTokens.sort((a, b) => (a.symbol || "").localeCompare(b.symbol || ""));
 
   // Filter tokens based on search term
-  const filteredTokens = uniqueTokens.filter(token => 
-    token.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    token.address?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTokens = uniqueTokens.filter(
+    (token) =>
+      token.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      token.address?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Auto-focus search input when dropdown opens
@@ -55,8 +63,8 @@ export function AssetSelect({ value, onChange, tokens, placeholder, className, c
   }, [isOpen]);
 
   return (
-    <Select 
-      value={value} 
+    <Select
+      value={value}
       onValueChange={onChange}
       open={isOpen}
       onOpenChange={(open) => {
@@ -69,14 +77,14 @@ export function AssetSelect({ value, onChange, tokens, placeholder, className, c
       </SelectTrigger>
       <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
         <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute left-2 top-2.5 h-4 w-4" />
           <Input
             ref={searchInputRef}
             type="text"
             placeholder="Search assets..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 mb-2"
+            className="mb-2 pl-8"
             onKeyDown={(e) => {
               // Prevent the select from closing on certain keys
               if (e.key === "Escape") {
@@ -96,7 +104,7 @@ export function AssetSelect({ value, onChange, tokens, placeholder, className, c
               <Avatar className="h-4 w-4 rounded-full">
                 <AvatarImage src={token.imageSrc} alt={token.symbol} />
                 <AvatarFallback delayMs={1000}>
-                  <img src={blo(token.address || '')} />
+                  <img src={blo(token.address || "")} />
                 </AvatarFallback>
               </Avatar>
               {token.symbol}
@@ -104,7 +112,7 @@ export function AssetSelect({ value, onChange, tokens, placeholder, className, c
           </SelectItem>
         ))}
         {filteredTokens.length === 0 && searchTerm && (
-          <div className="px-2 py-3 text-sm text-muted-foreground">No assets found</div>
+          <div className="text-muted-foreground px-2 py-3 text-sm">No assets found</div>
         )}
       </SelectContent>
     </Select>

@@ -7,7 +7,7 @@ interface InWalletSwitchProps {
 export function InWalletSwitch({ value, onChange, className }: InWalletSwitchProps) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex cursor-pointer items-center gap-2">
         <div
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             value ? "bg-secondary" : "bg-gray-300"
@@ -20,9 +20,7 @@ export function InWalletSwitch({ value, onChange, className }: InWalletSwitchPro
             }`}
           />
         </div>
-        <span className="text-sm font-medium text-primary-foreground">
-          In Wallet
-        </span>
+        <span className="text-primary-foreground text-sm font-medium">In Wallet</span>
       </label>
     </div>
   );

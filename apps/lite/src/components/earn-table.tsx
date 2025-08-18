@@ -17,15 +17,15 @@ import { blo } from "blo";
 // @ts-expect-error: this package lacks types
 import humanizeDuration from "humanize-duration";
 import { ClockAlert, ExternalLink } from "lucide-react";
-import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
 import { useState, useMemo } from "react";
+import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
 
 import { EarnSheetContent } from "@/components/earn-sheet-content";
-import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
-import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
+import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { useEarnFilters } from "@/hooks/use-earn-filters";
+import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { MIN_TIMELOCK } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
 import { getTokenURI } from "@/lib/tokens";
@@ -262,12 +262,12 @@ export function EarnTable({
   });
 
   // Extract curators from rows for filter options
-  const allCurators = useMemo(() => rows.map(row => row.curators), [rows]);
+  const allCurators = useMemo(() => rows.map((row) => row.curators), [rows]);
 
   // Create proper tokens map from rows for filtering
   const assetTokens = useMemo(() => {
     const assetMap = new Map<Address, Token>();
-    rows.forEach(row => {
+    rows.forEach((row) => {
       assetMap.set(row.asset.address.toLowerCase() as Address, row.asset);
     });
     return assetMap;
@@ -283,9 +283,12 @@ export function EarnTable({
   const getSortValue = (row: Row, column: string): number => {
     switch (column) {
       case "deposits":
-        const deposits = depositsMode === "userAssets"
-          ? row.userShares !== undefined ? row.vault.toAssets(row.userShares) : 0n
-          : row.vault.totalAssets;
+        const deposits =
+          depositsMode === "userAssets"
+            ? row.userShares !== undefined
+              ? row.vault.toAssets(row.userShares)
+              : 0n
+            : row.vault.totalAssets;
         return Number(deposits);
       case "apy":
         return Number(row.vault.apy);
@@ -298,18 +301,13 @@ export function EarnTable({
   const sortedRows = useSorting(filteredRows, sort, getSortValue);
 
   return (
-    <div className="md:w-full w-[calc(100vw-50px)]">
-      <EarnTableHeader
-        filters={filters}
-        onFiltersChange={setFilters}
-        tokens={assetTokens}
-        curators={allCurators}
-      />
+    <div className="w-[calc(100vw-50px)] md:w-full">
+      <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
       <Table className="overflow-x-auto">
-        <TableHeader className="bg-primary border-b border-border">
+        <TableHeader className="bg-primary border-border border-b">
           <TableRow>
             <TableHead className="text-primary-foreground pl-4 text-xs font-light">Vault</TableHead>
-            <SortableTableHead 
+            <SortableTableHead
               sortKey="deposits"
               currentSort={sort}
               onSort={handleSort}
@@ -319,7 +317,7 @@ export function EarnTable({
             </SortableTableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Curator</TableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Collateral</TableHead>
-            <SortableTableHead 
+            <SortableTableHead
               sortKey="apy"
               currentSort={sort}
               onSort={handleSort}
@@ -361,7 +359,7 @@ export function EarnTable({
                 }}
               >
                 <SheetTrigger asChild>
-                  <TableRow className="hover:bg-primary border-b border-border">
+                  <TableRow className="hover:bg-primary border-border border-b">
                     <TableCell className="py-3">
                       <VaultTableCell
                         address={row.vault.address}

@@ -1,7 +1,7 @@
 import { Market } from "@morpho-org/blue-sdk";
 import { Token } from "@morpho-org/uikit/lib/utils";
 import { useMemo } from "react";
-import { Address, erc20Abi, type Hex } from "viem";
+import { Address, erc20Abi } from "viem";
 import { useAccount, useReadContracts } from "wagmi";
 
 import { type BorrowTableFilters } from "@/components/filters/borrow-table-header";
