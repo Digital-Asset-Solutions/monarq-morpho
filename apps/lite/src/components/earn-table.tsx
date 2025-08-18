@@ -23,6 +23,7 @@ import { useState, useMemo } from "react";
 import { EarnSheetContent } from "@/components/earn-sheet-content";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useEarnFilters } from "@/hooks/use-earn-filters";
 import { MIN_TIMELOCK } from "@/lib/constants";
@@ -254,6 +255,12 @@ export function EarnTable({
     curator: "all",
   });
 
+  // Sort state
+  const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
+    column: null,
+    direction: null,
+  });
+
   // Extract curators from rows for filter options
   const allCurators = useMemo(() => rows.map(row => row.curators), [rows]);
 
@@ -269,6 +276,27 @@ export function EarnTable({
   // Apply filters
   const filteredRows = useEarnFilters(rows, filters, tokens, chain?.id);
 
+  // Sort handler
+  const handleSort = createSortHandler(sort, setSort);
+
+  // Get sort value for a row
+  const getSortValue = (row: Row, column: string): number => {
+    switch (column) {
+      case "deposits":
+        const deposits = depositsMode === "userAssets"
+          ? row.userShares !== undefined ? row.vault.toAssets(row.userShares) : 0n
+          : row.vault.totalAssets;
+        return Number(deposits);
+      case "apy":
+        return Number(row.vault.apy);
+      default:
+        return 0;
+    }
+  };
+
+  // Apply sorting
+  const sortedRows = useSorting(filteredRows, sort, getSortValue);
+
   return (
     <div className="md:w-full w-[calc(100vw-50px)]">
       <EarnTableHeader
@@ -281,14 +309,28 @@ export function EarnTable({
         <TableHeader className="bg-primary border-b border-border">
           <TableRow>
             <TableHead className="text-primary-foreground pl-4 text-xs font-light">Vault</TableHead>
-            <TableHead className="text-primary-foreground text-xs font-light">Deposits</TableHead>
+            <SortableTableHead 
+              sortKey="deposits"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              Deposits
+            </SortableTableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Curator</TableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Collateral</TableHead>
-            <TableHead className="text-primary-foreground text-xs font-light">APY</TableHead>
+            <SortableTableHead 
+              sortKey="apy"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              APY
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredRows.map((row) => {
+          {sortedRows.map((row) => {
             const ownerText = abbreviateAddress(row.vault.owner);
             const deposits =
               depositsMode === "userAssets"

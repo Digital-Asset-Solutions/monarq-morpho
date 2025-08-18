@@ -17,6 +17,8 @@ import { CheckCheck, Copy, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 import { type Chain, type Hex, type Address } from "viem";
 
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
+
 import { BorrowSheetContent } from "@/components/borrow-sheet-content";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
 import { BorrowTableHeader, type BorrowTableFilters } from "@/components/filters/borrow-table-header";
@@ -276,8 +278,34 @@ export function BorrowTable({
     loanToken: "all",
   });
 
+  // Sort state
+  const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
+    column: null,
+    direction: null,
+  });
+
   // Apply filters
   const filteredMarkets = useBorrowFilters(markets, tokens, filters, chain?.id);
+
+  // Sort handler
+  const handleSort = createSortHandler(sort, setSort);
+
+  // Get sort value for a market
+  const getSortValue = (market: Market, column: string): number => {
+    switch (column) {
+      case "lltv":
+        return Number(market.params.lltv);
+      case "liquidity":
+        return Number(market.liquidity);
+      case "rate":
+        return Number(market.borrowApy);
+      default:
+        return 0;
+    }
+  };
+
+  // Apply sorting
+  const sortedMarkets = useSorting(filteredMarkets, sort, getSortValue);
 
   return (
       <div className="md:w-full w-[calc(100vw-50px)]">
@@ -291,8 +319,20 @@ export function BorrowTable({
         <TableRow>
           <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
           <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">LLTV</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">
+          <SortableTableHead 
+            sortKey="lltv"
+            currentSort={sort}
+            onSort={handleSort}
+            className="text-primary-foreground text-xs font-light"
+          >
+            LLTV
+          </SortableTableHead>
+          <SortableTableHead 
+            sortKey="liquidity"
+            currentSort={sort}
+            onSort={handleSort}
+            className="text-primary-foreground text-xs font-light"
+          >
             <div className="flex items-center gap-1">
               Liquidity
               <TooltipProvider>
@@ -315,14 +355,21 @@ export function BorrowTable({
                 </Tooltip>
               </TooltipProvider>
             </div>
-          </TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Rate</TableHead>
+          </SortableTableHead>
+          <SortableTableHead 
+            sortKey="rate"
+            currentSort={sort}
+            onSort={handleSort}
+            className="text-primary-foreground text-xs font-light"
+          >
+            Rate
+          </SortableTableHead>
           <TableHead className="text-primary-foreground text-xs font-light">Vault Listing</TableHead>
           <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {filteredMarkets.map((market) => (
+        {sortedMarkets.map((market) => (
           <Sheet
             key={market.id}
             onOpenChange={(isOpen) => {
@@ -401,8 +448,30 @@ export function BorrowPositionTable({
     loanToken: "all",
   });
 
+  // Sort state
+  const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
+    column: null,
+    direction: null,
+  });
+
   // Apply filters
   const filteredMarkets = useBorrowFilters(markets, tokens, filters, chain?.id);
+
+  // Sort handler
+  const handleSort = createSortHandler(sort, setSort);
+
+  // Get sort value for a market
+  const getSortValue = (market: Market, column: string): number => {
+    switch (column) {
+      case "rate":
+        return Number(market.borrowApy);
+      default:
+        return 0;
+    }
+  };
+
+  // Apply sorting
+  const sortedMarkets = useSorting(filteredMarkets, sort, getSortValue);
 
   return (
     <div className="w-full">
@@ -416,13 +485,20 @@ export function BorrowPositionTable({
         <TableRow>
           <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
           <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
-          <TableHead className="text-primary-foreground text-xs font-light">Rate</TableHead>
+          <SortableTableHead 
+            sortKey="rate"
+            currentSort={sort}
+            onSort={handleSort}
+            className="text-primary-foreground text-xs font-light"
+          >
+            Rate
+          </SortableTableHead>
           <TableHead className="text-primary-foreground text-xs font-light">Health</TableHead>
           <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {filteredMarkets.map((market) => {
+        {sortedMarkets.map((market) => {
           const collateralToken = tokens.get(market.params.collateralToken)!;
           const loanToken = tokens.get(market.params.loanToken)!;
           const position = positions?.get(market.id);
