@@ -19,7 +19,7 @@ pnpm run lite-app:dev # ← for fallback app
 
 After running the commands above, open [http://localhost:5173/](http://localhost:5173/) in your browser to use whichever app you ran.
 
-## Features 
+## Features
 
 ### Fallback
 
@@ -47,7 +47,7 @@ If you want to give your users a tailored experience across chains, the Lite App
 
 ### UIKit
 
-> A package containing core components that are shared across apps 
+> A package containing core components that are shared across apps
 
 - various shadcn components with Morpho styling
 - robust `useContractEvents` hook with adaptive `eth_getLogs` fetching strategies
