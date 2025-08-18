@@ -19,7 +19,9 @@ import { type Chain, type Hex, type Address } from "viem";
 
 import { BorrowSheetContent } from "@/components/borrow-sheet-content";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
+import { BorrowTableHeader, type BorrowTableFilters } from "@/components/filters/borrow-table-header";
 import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
+import { useBorrowFilters } from "@/hooks/use-borrow-filters";
 import { SHARED_LIQUIDITY_DOCUMENTATION } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
 
@@ -266,8 +268,25 @@ export function BorrowTable({
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
 }) {
+  // Filter state
+  const [filters, setFilters] = useState<BorrowTableFilters>({
+    search: "",
+    inWallet: false,
+    borrowAsset: "all",
+    loanToken: "all",
+  });
+
+  // Apply filters
+  const filteredMarkets = useBorrowFilters(markets, tokens, filters, chain?.id);
+
   return (
-    <Table>
+      <div className="md:w-full w-[calc(100vw-50px)]">
+      <BorrowTableHeader
+        filters={filters}
+        onFiltersChange={setFilters}
+        tokens={tokens}
+      />
+      <Table className="overflow-x-auto">
       <TableHeader className="bg-primary border-b border-border">
         <TableRow>
           <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
@@ -303,7 +322,7 @@ export function BorrowTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {markets.map((market) => (
+        {filteredMarkets.map((market) => (
           <Sheet
             key={market.id}
             onOpenChange={(isOpen) => {
@@ -355,6 +374,7 @@ export function BorrowTable({
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }
 
@@ -373,8 +393,25 @@ export function BorrowPositionTable({
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
 }) {
+  // Filter state
+  const [filters, setFilters] = useState<BorrowTableFilters>({
+    search: "",
+    inWallet: false,
+    borrowAsset: "all",
+    loanToken: "all",
+  });
+
+  // Apply filters
+  const filteredMarkets = useBorrowFilters(markets, tokens, filters, chain?.id);
+
   return (
-    <Table>
+    <div className="w-full">
+      <BorrowTableHeader
+        filters={filters}
+        onFiltersChange={setFilters}
+        tokens={tokens}
+      />
+      <Table>
       <TableHeader className="bg-primary border-b border-border">
         <TableRow>
           <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
@@ -385,7 +422,7 @@ export function BorrowPositionTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {markets.map((market) => {
+        {filteredMarkets.map((market) => {
           const collateralToken = tokens.get(market.params.collateralToken)!;
           const loanToken = tokens.get(market.params.loanToken)!;
           const position = positions?.get(market.id);
@@ -446,5 +483,6 @@ export function BorrowPositionTable({
         })}
       </TableBody>
     </Table>
+    </div>
   );
 }

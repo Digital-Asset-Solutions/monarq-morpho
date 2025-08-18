@@ -18,10 +18,13 @@ import { blo } from "blo";
 import humanizeDuration from "humanize-duration";
 import { ClockAlert, ExternalLink } from "lucide-react";
 import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
+import { useState, useMemo } from "react";
 
 import { EarnSheetContent } from "@/components/earn-sheet-content";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
+import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
 import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
+import { useEarnFilters } from "@/hooks/use-earn-filters";
 import { MIN_TIMELOCK } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
 import { getTokenURI } from "@/lib/tokens";
@@ -243,9 +246,38 @@ export function EarnTable({
 }) {
   const isShiftHeld = useModifierKey("Shift");
 
+  // Filter state
+  const [filters, setFilters] = useState<EarnTableFilters>({
+    search: "",
+    inWallet: false,
+    depositAsset: "all",
+    curator: "all",
+  });
+
+  // Extract curators from rows for filter options
+  const allCurators = useMemo(() => rows.map(row => row.curators), [rows]);
+
+  // Create proper tokens map from rows for filtering
+  const assetTokens = useMemo(() => {
+    const assetMap = new Map<Address, Token>();
+    rows.forEach(row => {
+      assetMap.set(row.asset.address.toLowerCase() as Address, row.asset);
+    });
+    return assetMap;
+  }, [rows]);
+
+  // Apply filters
+  const filteredRows = useEarnFilters(rows, filters, tokens, chain?.id);
+
   return (
-    <div className="w-full">
-      <Table>
+    <div className="md:w-full w-[calc(100vw-50px)]">
+      <EarnTableHeader
+        filters={filters}
+        onFiltersChange={setFilters}
+        tokens={assetTokens}
+        curators={allCurators}
+      />
+      <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-b border-border">
           <TableRow>
             <TableHead className="text-primary-foreground pl-4 text-xs font-light">Vault</TableHead>
@@ -256,7 +288,7 @@ export function EarnTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => {
+          {filteredRows.map((row) => {
             const ownerText = abbreviateAddress(row.vault.owner);
             const deposits =
               depositsMode === "userAssets"

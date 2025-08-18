@@ -238,7 +238,7 @@ export function BorrowSubPage() {
       allowing rounded corners to show correctly. Inner div defines rounded corners and table background.
       */}
       <div className="flex grow flex-col">
-        <div className="bg-background flex h-full grow justify-center rounded-xl pb-16 pt-8 border border-border/50 shadow-sm">
+        <div className="bg-background flex h-full grow justify-center rounded-xl pb-16 border border-border/50 shadow-sm">
           <div className="text-primary-foreground w-full max-w-7xl">
             <BorrowTable
               chain={chain}
