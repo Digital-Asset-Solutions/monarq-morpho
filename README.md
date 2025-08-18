@@ -47,7 +47,7 @@ If you want to give your users a tailored experience across chains, the Lite App
 
 ### UIKit
 
-> A package containing core components that are shared across apps
+> A package containing core components that are shared across apps 
 
 - various shadcn components with Morpho styling
 - robust `useContractEvents` hook with adaptive `eth_getLogs` fetching strategies
