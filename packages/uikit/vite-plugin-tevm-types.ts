@@ -5,7 +5,6 @@ import path from "node:path";
 import { createCache } from "@tevm/bundler-cache";
 import { runSync } from "effect/Effect";
 import { glob } from "glob";
-// @ts-expect-error: solc has no types
 import * as solc from "solc";
 import { type FileAccessObject, bundler } from "tevm/bundler/base-bundler";
 import { loadConfig } from "tevm/bundler/config";
