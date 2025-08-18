@@ -282,7 +282,7 @@ export function EarnTable({
   // Get sort value for a row
   const getSortValue = (row: Row, column: string): number => {
     switch (column) {
-      case "deposits":
+      case "deposits": {
         const deposits =
           depositsMode === "userAssets"
             ? row.userShares !== undefined
@@ -290,6 +290,7 @@ export function EarnTable({
               : 0n
             : row.vault.totalAssets;
         return Number(deposits);
+      }
       case "apy":
         return Number(row.vault.apy);
       default:
