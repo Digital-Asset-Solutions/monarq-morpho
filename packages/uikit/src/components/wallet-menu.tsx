@@ -100,14 +100,14 @@ function WalletButton({ address }: { address: Address }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="tertiary" size="lg" className="rounded-full p-3 font-light">
+        <Button variant="tertiary" size="lg" className="rounded-full p-3 font-light border">
           <Avatar className="h-4 w-4">
             <AvatarImage src={ensAvatar ?? blo(address)} alt="Avatar" />
           </Avatar>
           <span className="hidden lg:block">{ensName ?? abbreviateAddress(address)}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="bg-navbar-interactive w-min rounded-xl border-none" align="end" sideOffset={20}>
+      <PopoverContent className="bg-white w-min rounded-xl border-none" align="end" sideOffset={20}>
         <div className="flex items-center gap-2 font-mono text-sm font-light">
           <Avatar className="h-4 w-4">
             <AvatarImage src={ensAvatar ?? blo(address)} alt="Avatar" />
@@ -184,7 +184,7 @@ export function WalletMenu({
           }
         }}
       >
-        <SelectTrigger className="bg-navbar-interactive h-[40px] w-16 rounded-full">
+        <SelectTrigger className="bg-white h-[40px] w-16 rounded-full cursor-pointer">
           <SelectValue aria-label={chainInUi?.name}>
             <ChainIcon id={chainInUi?.id} />
           </SelectValue>
@@ -210,7 +210,7 @@ export function WalletMenu({
                       <SelectItem
                         key={idx}
                         value={getChainSlug(chain)}
-                        className="text-secondary-foreground focus:text-secondary-foreground"
+                        className="text-secondary-foreground focus:text-secondary-foreground cursor-pointer"
                       >
                         <ChainIcon id={chain.id} /> {chain.name}
                       </SelectItem>

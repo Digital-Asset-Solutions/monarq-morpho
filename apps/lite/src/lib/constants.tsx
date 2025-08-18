@@ -10,7 +10,7 @@ export const APP_DETAILS = {
   icon: "/favicon.svg",
 };
 
-export const WORDMARK = ""; // Replace with "/your-wordmark.svg" to customize interface
+export const WORDMARK = "/lazarus.svg"; // Replace with "/your-wordmark.svg" to customize interface
 
 export const MIN_TIMELOCK = 3 * 24 * 60 * 60; // For filtering vaults
 

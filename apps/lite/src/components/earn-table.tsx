@@ -17,10 +17,14 @@ import { blo } from "blo";
 // @ts-expect-error: this package lacks types
 import humanizeDuration from "humanize-duration";
 import { ClockAlert, ExternalLink } from "lucide-react";
+import { useState, useMemo } from "react";
 import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
 
 import { EarnSheetContent } from "@/components/earn-sheet-content";
+import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
+import { useEarnFilters } from "@/hooks/use-earn-filters";
 import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { MIN_TIMELOCK } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
@@ -45,7 +49,7 @@ function VaultTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-4 w-4 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
@@ -101,7 +105,7 @@ function CuratorTableCell({
     <TooltipProvider>
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-4 w-4 rounded-full">
               <AvatarImage src={imageSrc ?? ""} alt="Avatar" />
               <AvatarFallback delayMs={500}>
@@ -139,7 +143,7 @@ function CuratorTableCell({
             </>
           )}
           {url != null && (
-            <a className="text-blue-200 underline" href={url} rel="noopener noreferrer" target="_blank">
+            <a className="text-blue-500 underline" href={url} rel="noopener noreferrer" target="_blank">
               {url}
             </a>
           )}
@@ -243,20 +247,89 @@ export function EarnTable({
 }) {
   const isShiftHeld = useModifierKey("Shift");
 
+  // Filter state
+  const [filters, setFilters] = useState<EarnTableFilters>({
+    search: "",
+    inWallet: false,
+    depositAsset: "all",
+    curator: "all",
+  });
+
+  // Sort state
+  const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
+    column: null,
+    direction: null,
+  });
+
+  // Extract curators from rows for filter options
+  const allCurators = useMemo(() => rows.map((row) => row.curators), [rows]);
+
+  // Create proper tokens map from rows for filtering
+  const assetTokens = useMemo(() => {
+    const assetMap = new Map<Address, Token>();
+    rows.forEach((row) => {
+      assetMap.set(row.asset.address.toLowerCase() as Address, row.asset);
+    });
+    return assetMap;
+  }, [rows]);
+
+  // Apply filters
+  const filteredRows = useEarnFilters(rows, filters, tokens, chain?.id);
+
+  // Sort handler
+  const handleSort = createSortHandler(sort, setSort);
+
+  // Get sort value for a row
+  const getSortValue = (row: Row, column: string): number => {
+    switch (column) {
+      case "deposits": {
+        const deposits =
+          depositsMode === "userAssets"
+            ? row.userShares !== undefined
+              ? row.vault.toAssets(row.userShares)
+              : 0n
+            : row.vault.totalAssets;
+        return Number(deposits);
+      }
+      case "apy":
+        return Number(row.vault.apy);
+      default:
+        return 0;
+    }
+  };
+
+  // Apply sorting
+  const sortedRows = useSorting(filteredRows, sort, getSortValue);
+
   return (
-    <div className="text-primary-foreground w-full max-w-7xl px-2 lg:px-8">
-      <Table className="border-separate border-spacing-y-3">
-        <TableHeader className="bg-primary">
+    <div className="w-[calc(100vw-50px)] md:w-full">
+      <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
+      <Table className="overflow-x-auto">
+        <TableHeader className="bg-primary border-border border-b">
           <TableRow>
-            <TableHead className="text-secondary-foreground rounded-l-lg pl-4 text-xs font-light">Vault</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Deposits</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Curator</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Collateral</TableHead>
-            <TableHead className="text-secondary-foreground rounded-r-lg text-xs font-light">APY</TableHead>
+            <TableHead className="text-primary-foreground pl-4 text-xs font-light">Vault</TableHead>
+            <SortableTableHead
+              sortKey="deposits"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              Deposits
+            </SortableTableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Curator</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Collateral</TableHead>
+            <SortableTableHead
+              sortKey="apy"
+              currentSort={sort}
+              onSort={handleSort}
+              className="text-primary-foreground text-xs font-light"
+            >
+              APY
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => {
+          {sortedRows.map((row) => {
             const ownerText = abbreviateAddress(row.vault.owner);
             const deposits =
               depositsMode === "userAssets"
@@ -287,8 +360,8 @@ export function EarnTable({
                 }}
               >
                 <SheetTrigger asChild>
-                  <TableRow className="bg-primary hover:bg-secondary">
-                    <TableCell className="rounded-l-lg py-3">
+                  <TableRow className="hover:bg-primary border-border border-b">
+                    <TableCell className="py-3">
                       <VaultTableCell
                         address={row.vault.address}
                         symbol={row.vault.name}
@@ -316,7 +389,7 @@ export function EarnTable({
                     <TableCell className="min-w-[120px]">
                       <CollateralsTableCell vault={row.vault} chain={chain} tokens={tokens} />
                     </TableCell>
-                    <TableCell className="rounded-r-lg">
+                    <TableCell>
                       <ApyTableCell nativeApy={row.vault.apy} fee={row.vault.fee} rewards={rewards} mode="earn" />
                     </TableCell>
                   </TableRow>
