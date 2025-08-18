@@ -1,65 +1,123 @@
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarSeparator,
+} from "@morpho-org/uikit/components/shadcn/sidebar";
 import { useKeyedState } from "@morpho-org/uikit/hooks/use-keyed-state";
 import { cn } from "@morpho-org/uikit/lib/utils";
-import { XIcon } from "lucide-react";
+import { ArrowUpRight, BarChart3, CreditCard, Home, XIcon } from "lucide-react";
+import { Link, useLocation } from "react-router";
 
-import { BANNERS } from "@/lib/constants";
+import { MorphoMenu } from "@/components/morpho-menu";
+import { BANNERS, WORDMARK } from "@/lib/constants";
 
 function Banner(chainId: number | undefined) {
-  const [shouldShowBanner, setShouldShowBanner] = useKeyedState(true, chainId, { persist: true });
+  const [shouldShowBanner, setShouldShowBanner] = useKeyedState(false, chainId, { persist: true });
 
   if (chainId === undefined || !BANNERS[chainId] || !shouldShowBanner) {
-    return { placeholder: undefined, banner: undefined };
+    return null;
   }
   const banner = BANNERS[chainId];
 
-  return {
-    placeholder: <div className="h-10 min-h-min"></div>,
-    banner: (
-      <aside
-        className={cn(
-          "pointer-events-auto flex h-10 min-h-min items-center px-1 text-sm font-light italic",
-          banner.color,
-        )}
-      >
-        {banner.text}
-        <XIcon className="hover:bg-accent mx-2 h-6 w-6 rounded-sm p-1" onClick={() => setShouldShowBanner(false)} />
-      </aside>
-    ),
-  };
+  return (
+    <aside
+      className={cn(
+        "flex h-10 min-h-min items-center px-2 text-sm font-light italic",
+        banner.color,
+      )}
+    >
+      {banner.text}
+      <XIcon className="hover:bg-accent mx-2 h-6 w-6 rounded-sm p-1" onClick={() => setShouldShowBanner(false)} />
+    </aside>
+  );
 }
 
-export function Header({ className, children, chainId, ...props }: React.ComponentProps<"div"> & { chainId?: number }) {
-  const { placeholder, banner } = Banner(chainId);
+export function AppSidebar({ chainId }: { chainId?: number }) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
   return (
-    <>
-      {placeholder}
-      <div className="pointer-events-none fixed top-0 z-50 flex h-screen w-screen flex-col">
-        {banner}
-        <header className={cn("bg-primary pointer-events-auto h-16", className)} {...props}>
-          {children}
-        </header>
-
-        <aside className="flex shrink grow basis-auto flex-col">
-          <div className="apply-rounding-blur -z-10 m-[-2px] mt-[-12px] flex grow">
-            <svg className="hidden h-0 w-0">
-              <defs>
-                <filter id="rounding_blur">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-                  <feColorMatrix
-                    in="blur"
-                    mode="matrix"
-                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -14"
-                    result="rounding_blur"
-                  />
-                  <feComposite in="SourceGraphic" in2="rounding_blur" operator="atop" />
-                </filter>
-              </defs>
-            </svg>
-            <div className="is-frame bg-primary w-full"></div>
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        {Banner(chainId)}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            {WORDMARK.length > 0 ? (
+              <img className="h-8" src={WORDMARK} alt="Lazarus" />
+            ) : (
+              <MorphoMenu />
+            )}
           </div>
-          {/* <div className="mt-[-10px] h-[12px] bg-slate-100 dark:bg-slate-700"></div> */}
-        </aside>
+        </div>
+      </SidebarHeader>
+
+      <SidebarSeparator className="ml-[-0px] mt-[-0.7px]" />
+
+      <SidebarContent className="px-5 py-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={currentPath === '/dashboard' || currentPath === '/'}>
+              <Link to="/dashboard" className="px-3 py-5">
+                <Home className="h-7 w-7" />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={currentPath.includes('/earn')}>
+              <Link to="/earn" className="px-3 py-5">
+                <BarChart3 className="h-7 w-7" />
+                <span>Earn</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={currentPath.includes('/borrow')}>
+              <Link to="/borrow" className="px-3 py-5">
+                <CreditCard className="h-7 w-7" />
+                <span>Borrow</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarFooter className="p-4 px-5">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="https://vote.morpho.org/" rel="noopener noreferrer" target="_blank" className="text-sm">
+                <span>Gov</span>
+                <ArrowUpRight className="h-4 w-4 text-secondary" strokeWidth={3} />
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="https://docs.morpho.org/" rel="noopener noreferrer" target="_blank" className="text-sm">
+                <span>Docs</span>
+                <ArrowUpRight className="h-4 w-4 text-secondary" strokeWidth={3} />
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+export function AppSidebarLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen w-full overflow-hidden">
+        {children}
       </div>
-    </>
+    </SidebarProvider>
   );
 }

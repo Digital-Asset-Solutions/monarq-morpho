@@ -45,7 +45,7 @@ function VaultTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-4 w-4 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
@@ -101,7 +101,7 @@ function CuratorTableCell({
     <TooltipProvider>
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-4 w-4 rounded-full">
               <AvatarImage src={imageSrc ?? ""} alt="Avatar" />
               <AvatarFallback delayMs={500}>
@@ -139,7 +139,7 @@ function CuratorTableCell({
             </>
           )}
           {url != null && (
-            <a className="text-blue-200 underline" href={url} rel="noopener noreferrer" target="_blank">
+            <a className="text-blue-500 underline" href={url} rel="noopener noreferrer" target="_blank">
               {url}
             </a>
           )}
@@ -244,15 +244,15 @@ export function EarnTable({
   const isShiftHeld = useModifierKey("Shift");
 
   return (
-    <div className="text-primary-foreground w-full max-w-7xl px-2 lg:px-8">
-      <Table className="border-separate border-spacing-y-3">
-        <TableHeader className="bg-primary">
+    <div className="w-full">
+      <Table>
+        <TableHeader className="bg-primary border-b border-border">
           <TableRow>
-            <TableHead className="text-secondary-foreground rounded-l-lg pl-4 text-xs font-light">Vault</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Deposits</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Curator</TableHead>
-            <TableHead className="text-secondary-foreground text-xs font-light">Collateral</TableHead>
-            <TableHead className="text-secondary-foreground rounded-r-lg text-xs font-light">APY</TableHead>
+            <TableHead className="text-primary-foreground pl-4 text-xs font-light">Vault</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Deposits</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Curator</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">Collateral</TableHead>
+            <TableHead className="text-primary-foreground text-xs font-light">APY</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -287,8 +287,8 @@ export function EarnTable({
                 }}
               >
                 <SheetTrigger asChild>
-                  <TableRow className="bg-primary hover:bg-secondary">
-                    <TableCell className="rounded-l-lg py-3">
+                  <TableRow className="hover:bg-primary border-b border-border">
+                    <TableCell className="py-3">
                       <VaultTableCell
                         address={row.vault.address}
                         symbol={row.vault.name}
@@ -316,7 +316,7 @@ export function EarnTable({
                     <TableCell className="min-w-[120px]">
                       <CollateralsTableCell vault={row.vault} chain={chain} tokens={tokens} />
                     </TableCell>
-                    <TableCell className="rounded-r-lg">
+                    <TableCell>
                       <ApyTableCell nativeApy={row.vault.apy} fee={row.vault.fee} rewards={rewards} mode="earn" />
                     </TableCell>
                   </TableRow>

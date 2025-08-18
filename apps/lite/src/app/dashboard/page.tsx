@@ -1,19 +1,18 @@
-import WatermarkSvg from "@morpho-org/uikit/assets/powered-by-morpho.svg?react";
-import { Button } from "@morpho-org/uikit/components/shadcn/button";
+import { SidebarInset, SidebarTrigger } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
 import { CORE_DEPLOYMENTS } from "@morpho-org/uikit/lib/deployments";
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
 import { useCallback, useEffect, useMemo } from "react";
-import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { useChains } from "wagmi";
 
 import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { MorphoMenu } from "@/components/morpho-menu";
+import { AppSidebar, AppSidebarLayout } from "@/components/header";
 import { RewardsButton } from "@/components/rewards-button";
 import { WelcomeModal } from "@/components/welcome-modal";
-import { APP_DETAILS, WORDMARK } from "@/lib/constants";
+import { APP_DETAILS } from "@/lib/constants";
+import { Button } from "@morpho-org/uikit/components/shadcn/button";
 
 enum SubPage {
   Earn = "earn",
@@ -25,7 +24,7 @@ function ConnectWalletButton() {
     <ConnectKitButton.Custom>
       {({ show }) => {
         return (
-          <Button variant="blue" size="lg" className="rounded-full px-4 font-light md:px-6" onClick={show}>
+          <Button variant="secondary" size="lg" className="px-4 font-light md:px-6" onClick={show}>
             <span className="inline md:hidden">Connect</span>
             <span className="hidden md:inline">Connect&nbsp;Wallet</span>
           </Button>
@@ -66,51 +65,27 @@ export default function Page() {
   }, [selectedSubPage]);
 
   return (
-    <div className="bg-background">
-      <Header className="flex items-center justify-between px-5 py-3" chainId={chain?.id}>
-        <div className="text-primary-foreground flex items-center gap-4">
-          {WORDMARK.length > 0 ? (
-            <>
-              <img className="max-h-[24px]" src={WORDMARK} />
-              <WatermarkSvg height={24} className="text-primary-foreground/50 w-[170px] min-w-[170px]" />
-            </>
-          ) : (
-            <MorphoMenu />
-          )}
-          <div className="flex items-center gap-0.5 rounded-full bg-transparent p-1 md:gap-2">
-            <Link to={SubPage.Earn} relative="path">
-              <Button
-                variant={selectedSubPage === SubPage.Earn ? "tertiary" : "secondaryTab"}
-                size="lg"
-                className="rounded-full px-4 font-light md:px-6"
-              >
-                Earn
-              </Button>
-            </Link>
-            <Link to={SubPage.Borrow} relative="path">
-              <Button
-                variant={selectedSubPage === SubPage.Borrow ? "tertiary" : "secondaryTab"}
-                size="lg"
-                className="rounded-full px-4 font-light md:px-6"
-              >
-                Borrow
-              </Button>
-            </Link>
+    <AppSidebarLayout>
+      <AppSidebar chainId={chain?.id} />
+      <SidebarInset className="flex flex-col">
+        <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex h-16 shrink-0 items-center justify-between px-4 border-b border-sidebar-border">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex items-center gap-2">
+            <RewardsButton chainId={chain?.id} />
+            <WalletMenu
+              selectedChainSlug={selectedChainSlug!}
+              setSelectedChainSlug={setSelectedChainSlug}
+              connectWalletButton={<ConnectWalletButton />}
+              coreDeployments={CORE_DEPLOYMENTS}
+            />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <RewardsButton chainId={chain?.id} />
-          <WalletMenu
-            selectedChainSlug={selectedChainSlug!}
-            setSelectedChainSlug={setSelectedChainSlug}
-            connectWalletButton={<ConnectWalletButton />}
-            coreDeployments={CORE_DEPLOYMENTS}
-          />
-        </div>
-      </Header>
-      <WelcomeModal />
-      <Outlet context={{ chain }} />
-      <Footer />
-    </div>
+        </header>
+        <main className="flex-1 overflow-auto bg-[#F5F5F5]">
+          <div className="flex flex-col gap-4 p-4">
+            <Outlet context={{ chain }} />
+          </div>
+        </main>
+      </SidebarInset>
+    </AppSidebarLayout>
   );
 }

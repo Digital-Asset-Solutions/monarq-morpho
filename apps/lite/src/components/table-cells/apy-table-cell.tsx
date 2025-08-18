@@ -29,9 +29,9 @@ export function ApyTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="group hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             {formatApy(netApy)}
-            {rewards.length > 0 && <Sparkles className="text-morpho-brand h-4 w-4" />}
+            {rewards.length > 0 && <Sparkles className="text-morpho-brand group-hover:text-secondary-foreground h-4 w-4" />}
           </div>
         </TooltipTrigger>
         <TooltipContent
@@ -54,7 +54,7 @@ export function ApyTableCell({
                   {reward.depositUrl && getDomain(reward.depositUrl) !== window.location.hostname && (
                     <a
                       href={reward.depositUrl}
-                      className="bg-morpho-brand flex items-center gap-1 rounded-sm px-1"
+                      className="bg-morpho-brand/50 flex items-center gap-1 rounded-sm px-1"
                       rel="noopener noreferrer"
                       target="_blank"
                     >

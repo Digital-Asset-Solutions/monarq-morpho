@@ -28,7 +28,7 @@ function TokenTableCell({ address, symbol, imageSrc, chain }: Token & { chain: C
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="size-4 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
@@ -89,7 +89,7 @@ function HealthTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             {ltvText} / {lltvText}
           </div>
         </TooltipTrigger>
@@ -144,7 +144,7 @@ function VaultsTableCell({
               <div className="flex items-center justify-between font-light">
                 <span>Address</span>
                 <a
-                  className="hover:bg-secondary flex gap-1 rounded-sm p-1"
+                  className="hover:bg-secondary hover:text-secondary-foreground flex gap-1 rounded-sm p-1"
                   href={chain?.blockExplorers?.default.url.concat(`/address/${vault.address}`)}
                   rel="noopener noreferrer"
                   target="_blank"
@@ -161,7 +161,7 @@ function VaultsTableCell({
                     .map((curator) => (
                       <a
                         key={curator.name}
-                        className="hover:bg-secondary flex gap-1 rounded-sm p-1"
+                        className="hover:bg-secondary hover:text-secondary-foreground flex gap-1 rounded-sm p-1"
                         href={curator.url ?? ""}
                         rel="noopener noreferrer"
                         target="_blank"
@@ -220,7 +220,7 @@ function IdTableCell({ marketId }: { marketId: MarketId }) {
       <Tooltip delayDuration={1000}>
         <TooltipTrigger asChild>
           <button
-            className="hover:bg-secondary ml-[-8px] flex w-min cursor-pointer items-center gap-2 rounded-sm p-2"
+            className="ml-[-8px] flex w-min cursor-pointer items-center gap-2 rounded-sm p-2"
             onClick={(event) => {
               event.stopPropagation();
               void navigator.clipboard.writeText(marketId);
@@ -267,13 +267,13 @@ export function BorrowTable({
   refetchPositions: () => void;
 }) {
   return (
-    <Table className="border-separate border-spacing-y-3">
-      <TableHeader className="bg-primary">
+    <Table>
+      <TableHeader className="bg-primary border-b border-border">
         <TableRow>
-          <TableHead className="text-secondary-foreground rounded-l-lg pl-4 text-xs font-light">Collateral</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Loan</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">LLTV</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">
+          <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">LLTV</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">
             <div className="flex items-center gap-1">
               Liquidity
               <TooltipProvider>
@@ -297,9 +297,9 @@ export function BorrowTable({
               </TooltipProvider>
             </div>
           </TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Rate</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Vault Listing</TableHead>
-          <TableHead className="text-secondary-foreground rounded-r-lg text-xs font-light">ID</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Rate</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Vault Listing</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -312,8 +312,8 @@ export function BorrowTable({
             }}
           >
             <SheetTrigger asChild>
-              <TableRow className="bg-primary hover:bg-secondary">
-                <TableCell className="rounded-l-lg py-3">
+              <TableRow className="hover:bg-primary border-b border-border">
+                <TableCell className="py-3">
                   <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
                 </TableCell>
                 <TableCell>
@@ -345,7 +345,7 @@ export function BorrowTable({
                     chain={chain}
                   />
                 </TableCell>
-                <TableCell className="rounded-r-lg">
+                <TableCell>
                   <IdTableCell marketId={market.id} />
                 </TableCell>
               </TableRow>
@@ -374,14 +374,14 @@ export function BorrowPositionTable({
   refetchPositions: () => void;
 }) {
   return (
-    <Table className="border-separate border-spacing-y-3">
-      <TableHeader className="bg-primary">
+    <Table>
+      <TableHeader className="bg-primary border-b border-border">
         <TableRow>
-          <TableHead className="text-secondary-foreground rounded-l-lg pl-4 text-xs font-light">Collateral</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Loan</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Rate</TableHead>
-          <TableHead className="text-secondary-foreground text-xs font-light">Health</TableHead>
-          <TableHead className="text-secondary-foreground rounded-r-lg text-xs font-light">ID</TableHead>
+          <TableHead className="text-primary-foreground pl-4 text-xs font-light">Collateral</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Loan</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Rate</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">Health</TableHead>
+          <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -413,8 +413,8 @@ export function BorrowPositionTable({
               }}
             >
               <SheetTrigger asChild>
-                <TableRow className="bg-primary hover:bg-secondary">
-                  <TableCell className="rounded-l-lg py-3">
+                <TableRow className="hover:bg-primary border-b border-border">
+                  <TableCell className="py-3">
                     <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
                   </TableCell>
                   <TableCell>
@@ -435,7 +435,7 @@ export function BorrowPositionTable({
                       collateralToken={collateralToken}
                     />
                   </TableCell>
-                  <TableCell className="rounded-r-lg">
+                  <TableCell>
                     <IdTableCell marketId={market.id} />
                   </TableCell>
                 </TableRow>
