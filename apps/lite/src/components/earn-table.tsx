@@ -274,7 +274,7 @@ export function EarnTable({
   }, [rows]);
 
   // Apply filters
-  const filteredRows = useEarnFilters(rows, filters, tokens, chain?.id);
+  const filteredRows = useEarnFilters(rows, filters, chain?.id);
 
   // Sort handler
   const handleSort = createSortHandler(sort, setSort);

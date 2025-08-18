@@ -5,12 +5,7 @@ import { useAccount, useReadContracts } from "wagmi";
 import { type Row } from "@/components/earn-table";
 import { type EarnTableFilters } from "@/components/filters/earn-table-header";
 
-export function useEarnFilters(
-  rows: Row[],
-  filters: EarnTableFilters,
-  tokens: Map<Address, { decimals?: number; symbol?: string }>,
-  chainId?: number,
-) {
+export function useEarnFilters(rows: Row[], filters: EarnTableFilters, chainId?: number) {
   const { address: userAddress } = useAccount();
 
   // Get unique token addresses for balance checks
