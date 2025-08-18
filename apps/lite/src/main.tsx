@@ -8,6 +8,8 @@ import "@/index.css";
 import { BorrowSubPage } from "@/app/dashboard/borrow-subpage.tsx";
 import { EarnSubPage } from "@/app/dashboard/earn-subpage.tsx";
 import Page from "@/app/dashboard/page.tsx";
+import VaultPage from "@/app/vault/[address]/page.tsx";
+import MarketPage from "@/app/market/[id]/page.tsx";
 import App from "@/App.tsx";
 import { DEFAULT_CHAIN } from "@/lib/constants";
 
@@ -29,9 +31,9 @@ createRoot(document.getElementById("root")!).render(
             <Route element={<Page />}>
               <Route path="earn" element={<EarnSubPage />} />
               <Route path="borrow" element={<BorrowSubPage />} />
+              <Route path="vault/:address" element={<VaultPage />} />
+              <Route path="market/:id" element={<MarketPage />} />
             </Route>
-            {/* <Route path="market/:id" element={<EarnSubPage />} />
-              <Route path="vault/:address" element={<EarnSubPage />} /> */}
           </Route>
         </Route>
       </Routes>

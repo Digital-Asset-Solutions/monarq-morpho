@@ -23,7 +23,7 @@ import { getTokenURI } from "@/lib/tokens";
 const STALE_TIME = 5 * 60 * 1000;
 
 // This cannot be inlined because TanStack needs a stable reference to avoid re-renders.
-function restructurePositions(data: (readonly [bigint, bigint, bigint])[]) {
+export function restructurePositions(data: (readonly [bigint, bigint, bigint])[]) {
   return data.map((x) => restructure(x, { abi: morphoAbi, name: "position", args: ["0x", "0x"] }));
 }
 
@@ -157,7 +157,7 @@ export function BorrowSubPage() {
     query: { staleTime: Infinity, gcTime: Infinity },
   });
 
-  const { data: positionsRaw, refetch: refetchPositionsRaw } = useReadContracts({
+  const { data: positionsRaw } = useReadContracts({
     contracts: marketsArr.map(
       (market) =>
         ({
@@ -227,7 +227,6 @@ export function BorrowSubPage() {
                 tokens={tokens}
                 positions={positions}
                 borrowingRewards={borrowingRewards}
-                refetchPositions={refetchPositionsRaw}
               />
             </div>
           </div>
@@ -246,7 +245,6 @@ export function BorrowSubPage() {
               tokens={tokens}
               marketVaults={marketVaults}
               borrowingRewards={borrowingRewards}
-              refetchPositions={refetchPositionsRaw}
             />
           </div>
         </div>

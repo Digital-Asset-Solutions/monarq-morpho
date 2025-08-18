@@ -183,7 +183,7 @@ export function EarnSubPage() {
   }, [tokenAddresses, tokenData]);
 
   // MARK: Fetch user's balance in each vault
-  const { data: balanceOfData, refetch: refetchBalanceOf } = useReadContracts({
+  const { data: balanceOfData } = useReadContracts({
     contracts: vaultsData?.map(
       (vaultData) =>
         ({
@@ -241,7 +241,6 @@ export function EarnSubPage() {
               depositsMode="userAssets"
               tokens={tokens}
               lendingRewards={lendingRewards}
-              refetchPositions={refetchBalanceOf}
             />
           </div>
         )
@@ -258,7 +257,6 @@ export function EarnSubPage() {
             depositsMode="totalAssets"
             tokens={tokens}
             lendingRewards={lendingRewards}
-            refetchPositions={refetchBalanceOf}
           />
         </div>
       </div>
