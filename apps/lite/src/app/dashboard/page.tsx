@@ -13,6 +13,7 @@ import { RewardsButton } from "@/components/rewards-button";
 import { APP_DETAILS } from "@/lib/constants";
 
 enum SubPage {
+  Dashboard = "dashboard",
   Earn = "earn",
   Borrow = "borrow",
 }
@@ -38,7 +39,11 @@ export default function Page() {
 
   const location = useLocation();
   const locationSegments = location.pathname.toLowerCase().split("/").slice(1);
-  const selectedSubPage = locationSegments.at(1) === SubPage.Borrow ? SubPage.Borrow : SubPage.Earn;
+  const selectedSubPage = locationSegments.at(1) === SubPage.Borrow 
+    ? SubPage.Borrow 
+    : locationSegments.at(1) === SubPage.Dashboard 
+    ? SubPage.Dashboard 
+    : SubPage.Earn;
 
   const chains = useChains();
   const chain = useMemo(
