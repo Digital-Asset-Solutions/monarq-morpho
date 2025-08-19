@@ -4,7 +4,7 @@ declare module "*.s.sol" {
     deployedBytecode: `0x${string}`;
     read: {
       withdrawQueue: (metaMorpho: `0x${string}`) => {
-        abi: any[];
+        abi: unknown[];
         args: readonly [`0x${string}`];
         functionName: "withdrawQueue";
         humanReadableAbi: string[];
@@ -14,7 +14,7 @@ declare module "*.s.sol" {
         metaMorphos: readonly `0x${string}`[],
         includedOwners: readonly `0x${string}`[],
       ) => {
-        abi: any[];
+        abi: unknown[];
         args: readonly [`0x${string}`, readonly `0x${string}`[], readonly `0x${string}`[]];
         functionName: "getAccrualVaults";
         humanReadableAbi: string[];

@@ -237,6 +237,7 @@ export function EarnTable({
   tokens,
   lendingRewards,
   refetchPositions,
+  displayHeader = true,
 }: {
   chain: Chain | undefined;
   rows: Row[];
@@ -244,6 +245,7 @@ export function EarnTable({
   tokens: Map<Address, { decimals?: number; symbol?: string }>;
   lendingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
+  displayHeader?: boolean;
 }) {
   const isShiftHeld = useModifierKey("Shift");
 
@@ -302,8 +304,10 @@ export function EarnTable({
   const sortedRows = useSorting(filteredRows, sort, getSortValue);
 
   return (
-    <div className="w-[calc(100vw-50px)] md:w-full">
-      <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
+    <div className="w-full">
+      {displayHeader && (
+        <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
+      )}
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">
           <TableRow>
@@ -360,7 +364,7 @@ export function EarnTable({
                 }}
               >
                 <SheetTrigger asChild>
-                  <TableRow className="hover:bg-primary border-border border-b">
+                  <TableRow className="hover:bg-primary border-border border-b cursor-pointer">
                     <TableCell className="py-3">
                       <VaultTableCell
                         address={row.vault.address}

@@ -214,7 +214,7 @@ export function EarnSubPage() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col px-2.5">
+    <div className="flex min-h-screen w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       {userAddress === undefined ? (
         <CtaCard
           className="flex w-full max-w-5xl flex-col gap-4 px-8 pb-14 pt-24 md:m-auto md:grid md:grid-cols-[50%_50%] md:px-0 md:pt-32 dark:bg-neutral-900"

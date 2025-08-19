@@ -37,7 +37,7 @@
   --card: var(--morpho-white);
   --card-foreground: hsl(240 10% 3.9%);
 
-  --popover: var(--card);
+  --popover: white;
   --popover-foreground: hsl(240 10% 3.9%);
 
   --primary: #FAFAFA;

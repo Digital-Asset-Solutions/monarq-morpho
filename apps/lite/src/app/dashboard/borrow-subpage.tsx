@@ -216,7 +216,7 @@ export function BorrowSubPage() {
   const userMarkets = marketsArr.filter((market) => positions?.get(market.id)?.collateral ?? 0n > 0n);
 
   return (
-    <div className="flex min-h-full flex-col px-2.5">
+    <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       {userMarkets.length > 0 && (
         <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
           <div className="text-primary-foreground w-full max-w-7xl">

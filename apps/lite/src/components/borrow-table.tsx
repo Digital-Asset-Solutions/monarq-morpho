@@ -307,7 +307,7 @@ export function BorrowTable({
   const sortedMarkets = useSorting(filteredMarkets, sort, getSortValue);
 
   return (
-    <div className="w-[calc(100vw-50px)] md:w-full">
+    <div className="w-full">
       <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">
@@ -373,7 +373,7 @@ export function BorrowTable({
               }}
             >
               <SheetTrigger asChild>
-                <TableRow className="hover:bg-primary border-border border-b">
+                <TableRow className="hover:bg-primary border-border border-b cursor-pointer">
                   <TableCell className="py-3">
                     <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
                   </TableCell>
@@ -427,6 +427,7 @@ export function BorrowPositionTable({
   positions,
   borrowingRewards,
   refetchPositions,
+  displayHeader = true,
 }: {
   chain: Chain | undefined;
   markets: Market[];
@@ -434,6 +435,7 @@ export function BorrowPositionTable({
   positions: Map<Hex, AccrualPosition> | undefined;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
+  displayHeader?: boolean;
 }) {
   // Filter state
   const [filters, setFilters] = useState<BorrowTableFilters>({
@@ -470,7 +472,7 @@ export function BorrowPositionTable({
 
   return (
     <div className="w-full">
-      <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
+      {displayHeader && <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />}
       <Table>
         <TableHeader className="bg-primary border-border border-b">
           <TableRow>
