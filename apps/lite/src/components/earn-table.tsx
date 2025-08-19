@@ -1,7 +1,6 @@
 import { AccrualVault } from "@morpho-org/blue-sdk";
 import { AvatarStack } from "@morpho-org/uikit/components/avatar-stack";
 import { AvatarImage, AvatarFallback, Avatar } from "@morpho-org/uikit/components/shadcn/avatar";
-
 import {
   TableHeader,
   TableRow,
@@ -12,7 +11,7 @@ import {
 } from "@morpho-org/uikit/components/shadcn/table";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@morpho-org/uikit/components/shadcn/tooltip";
 import { useModifierKey } from "@morpho-org/uikit/hooks/use-modifier-key";
-import { formatBalanceWithSymbol, Token, formatLtv, abbreviateAddress } from "@morpho-org/uikit/lib/utils";
+import { formatBalanceWithSymbol, Token, formatLtv, abbreviateAddress, getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 // @ts-expect-error: this package lacks types
 import humanizeDuration from "humanize-duration";
@@ -20,7 +19,6 @@ import { ClockAlert, ExternalLink } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
 import { useNavigate } from "react-router";
-
 
 import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
@@ -357,7 +355,7 @@ export function EarnTable({
               <TableRow 
                 key={row.vault.address}
                 className="hover:bg-primary border-border border-b cursor-pointer"
-                onClick={() => navigate(`/ethereum/vault/${row.vault.address}`)}
+                onClick={() => navigate(`/${getChainSlug(chain!)}/vault/${row.vault.address}`)}
               >
                 <TableCell className="py-3">
                   <VaultTableCell
