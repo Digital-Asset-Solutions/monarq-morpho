@@ -373,7 +373,7 @@ export function BorrowTable({
               }}
             >
               <SheetTrigger asChild>
-                <TableRow className="hover:bg-primary border-border border-b cursor-pointer">
+                <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
                   </TableCell>

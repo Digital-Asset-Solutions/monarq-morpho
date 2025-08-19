@@ -27,8 +27,7 @@ enum Actions {
 
 const STYLE_LABEL = "flex items-center justify-between text-xs font-light";
 const STYLE_TAB = "hover:bg-secondary/10 rounded-full duration-200 ease-in-out cursor-pointer";
-const STYLE_INPUT_WRAPPER =
-  "bg-primary flex flex-col gap-4 rounded-2xl p-4 transition-colors duration-200 ease-in-out";
+const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col gap-4 rounded-2xl p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
 
 export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Address; asset: Token }) {
