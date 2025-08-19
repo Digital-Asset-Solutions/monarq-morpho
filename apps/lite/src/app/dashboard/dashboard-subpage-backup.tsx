@@ -300,7 +300,7 @@ export function DashboardSubPage() {
   if (status === "reconnecting") return undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-[calc(100vw-35px)] md:w-full">
       {/* Show earn table if user has earn positions */}
       {userRows.length > 0 && (
               <div className="bg-white rounded-xl">

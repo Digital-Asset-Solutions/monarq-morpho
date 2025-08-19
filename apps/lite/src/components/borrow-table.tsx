@@ -307,7 +307,7 @@ export function BorrowTable({
   const sortedMarkets = useSorting(filteredMarkets, sort, getSortValue);
 
   return (
-    <div className="w-[calc(100vw-50px)] md:w-full">
+    <div className="w-full">
       <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">

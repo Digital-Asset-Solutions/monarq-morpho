@@ -304,7 +304,7 @@ export function EarnTable({
   const sortedRows = useSorting(filteredRows, sort, getSortValue);
 
   return (
-    <div className="w-[calc(100vw-50px)] md:w-full">
+    <div className="w-full">
       {displayHeader && <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />}
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">
