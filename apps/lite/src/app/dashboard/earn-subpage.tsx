@@ -231,7 +231,7 @@ export function EarnSubPage() {
   if (status === "reconnecting") return undefined;
 
   return (
-    <div className="flex min-h-full flex-col px-2.5">
+    <div className="flex min-h-full flex-col px-2.5 w-[calc(100vw-35px)] md:w-full">
       {userRows.length > 0 && (
         <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
           <EarnTable

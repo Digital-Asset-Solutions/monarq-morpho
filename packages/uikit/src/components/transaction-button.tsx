@@ -58,7 +58,7 @@ export function TransactionButton<
   return (
     <Button
       className="text-md mt-3 h-12 w-full rounded-full font-light"
-      variant="blue"
+      variant="secondary"
       onClick={() => {
         setIsWaitingForUser(true);
         setTxnHash(undefined);

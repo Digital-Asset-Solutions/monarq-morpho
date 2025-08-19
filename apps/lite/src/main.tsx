@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
 
 import "@/index.css";
-import { DashboardSubPage } from "./app/dashboard/dashboard-subpage-backup";
+import { DashboardSubPage } from "./app/dashboard/dashboard-subpage";
 
 import { BorrowSubPage } from "@/app/dashboard/borrow-subpage.tsx";
 import { EarnSubPage } from "@/app/dashboard/earn-subpage.tsx";
