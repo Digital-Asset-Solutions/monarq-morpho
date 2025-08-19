@@ -219,7 +219,7 @@ export function BorrowSubPage() {
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       {userMarkets.length > 0 && (
         <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
-          <div className="text-primary-foreground w-full max-w-7xl">
+          <div className="text-primary-foreground w-full">
             <BorrowPositionTable
               chain={chain}
               markets={userMarkets}
@@ -237,7 +237,7 @@ export function BorrowSubPage() {
       */}
       <div className="flex grow flex-col">
         <div className="bg-background border-border/50 flex h-full grow justify-center rounded-xl border pb-16 shadow-sm">
-          <div className="text-primary-foreground w-full max-w-7xl">
+          <div className="text-primary-foreground w-full">
             <BorrowTable
               chain={chain}
               markets={marketsArr}
