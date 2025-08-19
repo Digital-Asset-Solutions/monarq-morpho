@@ -75,7 +75,7 @@ export function AssetSelect({
       <SelectTrigger className={`min-w-[180px] ${className}`}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent onCloseAutoFocus={(e) => e.preventDefault()} >
+      <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
         <div className="relative">
           <Search className="text-muted-foreground absolute left-2 top-2.5 h-4 w-4" />
           <Input

@@ -11,7 +11,7 @@ import {
 } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { useKeyedState } from "@morpho-org/uikit/hooks/use-keyed-state";
 import { cn } from "@morpho-org/uikit/lib/utils";
-import { ArrowUpRight, BarChart3, CircleDollarSign, CreditCard, Home, LucideHandCoins, XIcon } from "lucide-react";
+import { ArrowUpRight, CircleDollarSign, Home, LucideHandCoins, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 import { MorphoMenu } from "@/components/morpho-menu";
@@ -44,7 +44,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
         {Banner(chainId)}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            {WORDMARK.length > 0 ? <img className="h-8 ml-2" src={WORDMARK} alt="Lazarus" /> : <MorphoMenu />}
+            {WORDMARK.length > 0 ? <img className="ml-2 h-8" src={WORDMARK} alt="Lazarus" /> : <MorphoMenu />}
           </div>
         </div>
       </SidebarHeader>
@@ -54,9 +54,13 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
       <SidebarContent className="px-5 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath.includes("/dashboard")} className="transition-all duration-200">
+            <SidebarMenuButton
+              asChild
+              isActive={currentPath.includes("/dashboard")}
+              className="transition-all duration-200"
+            >
               <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5">
-                <Home className="h-7 w-7 text-secondary" />
+                <Home className="text-secondary h-7 w-7" />
                 <span>Dashboard</span>
               </Link>
             </SidebarMenuButton>
@@ -64,15 +68,19 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={currentPath.includes("/earn")} className="transition-all duration-200">
               <Link to={`/${chainSlug}/earn`} className="px-3 py-5">
-                <CircleDollarSign className="h-7 w-7 text-secondary" />
+                <CircleDollarSign className="text-secondary h-7 w-7" />
                 <span>Earn</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath.includes("/borrow")} className="transition-all duration-200">
+            <SidebarMenuButton
+              asChild
+              isActive={currentPath.includes("/borrow")}
+              className="transition-all duration-200"
+            >
               <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
-                <LucideHandCoins className="h-7 w-7 text-secondary" />
+                <LucideHandCoins className="text-secondary h-7 w-7" />
                 <span>Borrow</span>
               </Link>
             </SidebarMenuButton>

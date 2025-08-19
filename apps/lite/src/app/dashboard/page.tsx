@@ -69,7 +69,7 @@ export default function Page() {
       <SidebarInset className="flex flex-col">
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" />
-          <div className="flex items-center gap-2 mr-2">
+          <div className="mr-2 flex items-center gap-2">
             <RewardsButton chainId={chain?.id} />
             <WalletMenu
               selectedChainSlug={selectedChainSlug!}

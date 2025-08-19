@@ -364,7 +364,7 @@ export function EarnTable({
                 }}
               >
                 <SheetTrigger asChild>
-                  <TableRow className="hover:bg-primary border-border border-b cursor-pointer">
+                  <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                     <TableCell className="py-3">
                       <VaultTableCell
                         address={row.vault.address}
