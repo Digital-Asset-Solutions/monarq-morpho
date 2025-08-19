@@ -5,12 +5,13 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
 
 import "@/index.css";
+import { DashboardSubPage } from "./app/dashboard/dashboard-subpage-backup";
+
 import { BorrowSubPage } from "@/app/dashboard/borrow-subpage.tsx";
 import { EarnSubPage } from "@/app/dashboard/earn-subpage.tsx";
 import Page from "@/app/dashboard/page.tsx";
 import App from "@/App.tsx";
 import { DEFAULT_CHAIN } from "@/lib/constants";
-import { DashboardSubPage } from "./app/dashboard/dashboard-subpage-backup";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

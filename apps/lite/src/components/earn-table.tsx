@@ -305,7 +305,9 @@ export function EarnTable({
 
   return (
     <div className="w-full">
-      {displayHeader && <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />}
+      {displayHeader && (
+        <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
+      )}
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">
           <TableRow>

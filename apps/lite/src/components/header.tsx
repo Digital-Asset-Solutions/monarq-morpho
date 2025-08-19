@@ -36,7 +36,7 @@ function Banner(chainId: number | undefined) {
 export function AppSidebar({ chainId }: { chainId?: number }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const chainSlug = location.pathname.split('/')[1]; // Extract chain from current path
+  const chainSlug = location.pathname.split("/")[1]; // Extract chain from current path
 
   return (
     <Sidebar>
