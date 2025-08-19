@@ -36,6 +36,7 @@ function Banner(chainId: number | undefined) {
 export function AppSidebar({ chainId }: { chainId?: number }) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const chainSlug = location.pathname.split('/')[1]; // Extract chain from current path
 
   return (
     <Sidebar>
@@ -53,8 +54,8 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
       <SidebarContent className="px-5 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath === "/dashboard" || currentPath === "/"}>
-              <Link to="/dashboard" className="px-3 py-5">
+            <SidebarMenuButton asChild isActive={currentPath.includes("/dashboard")}>
+              <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5">
                 <Home className="h-7 w-7" />
                 <span>Dashboard</span>
               </Link>
@@ -62,7 +63,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={currentPath.includes("/earn")}>
-              <Link to="/earn" className="px-3 py-5">
+              <Link to={`/${chainSlug}/earn`} className="px-3 py-5">
                 <BarChart3 className="h-7 w-7" />
                 <span>Earn</span>
               </Link>
@@ -70,7 +71,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={currentPath.includes("/borrow")}>
-              <Link to="/borrow" className="px-3 py-5">
+              <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
                 <CreditCard className="h-7 w-7" />
                 <span>Borrow</span>
               </Link>

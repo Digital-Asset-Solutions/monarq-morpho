@@ -237,6 +237,7 @@ export function EarnTable({
   tokens,
   lendingRewards,
   refetchPositions,
+  displayHeader = true,
 }: {
   chain: Chain | undefined;
   rows: Row[];
@@ -244,6 +245,7 @@ export function EarnTable({
   tokens: Map<Address, { decimals?: number; symbol?: string }>;
   lendingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
+  displayHeader?: boolean;
 }) {
   const isShiftHeld = useModifierKey("Shift");
 
@@ -303,7 +305,7 @@ export function EarnTable({
 
   return (
     <div className="w-[calc(100vw-50px)] md:w-full">
-      <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />
+      {displayHeader && <EarnTableHeader filters={filters} onFiltersChange={setFilters} tokens={assetTokens} curators={allCurators} />}
       <Table className="overflow-x-auto">
         <TableHeader className="bg-primary border-border border-b">
           <TableRow>

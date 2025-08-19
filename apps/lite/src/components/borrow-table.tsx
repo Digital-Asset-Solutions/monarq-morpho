@@ -427,6 +427,7 @@ export function BorrowPositionTable({
   positions,
   borrowingRewards,
   refetchPositions,
+  displayHeader = true,
 }: {
   chain: Chain | undefined;
   markets: Market[];
@@ -434,6 +435,7 @@ export function BorrowPositionTable({
   positions: Map<Hex, AccrualPosition> | undefined;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
   refetchPositions: () => void;
+  displayHeader?: boolean;
 }) {
   // Filter state
   const [filters, setFilters] = useState<BorrowTableFilters>({
@@ -470,7 +472,7 @@ export function BorrowPositionTable({
 
   return (
     <div className="w-full">
-      <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />
+      {displayHeader && <BorrowTableHeader filters={filters} onFiltersChange={setFilters} tokens={tokens} />}
       <Table>
         <TableHeader className="bg-primary border-border border-b">
           <TableRow>
