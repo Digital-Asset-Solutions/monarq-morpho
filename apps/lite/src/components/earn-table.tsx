@@ -94,7 +94,7 @@ function VaultTableCell({
   );
 }
 
-function CuratorTableCell({
+export function CuratorTableCell({
   name,
   roles,
   url,

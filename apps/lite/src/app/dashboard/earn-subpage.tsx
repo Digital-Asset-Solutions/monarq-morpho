@@ -1,4 +1,3 @@
-import { metaMorphoAbi } from "@morpho-org/uikit/assets/abis/meta-morpho";
 import { Token } from "@morpho-org/uikit/lib/utils";
 import { useMemo } from "react";
 import { useOutletContext } from "react-router";
@@ -21,7 +20,11 @@ export function EarnSubPage() {
 
   const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
 
-  const { vaults, vaultsData, topCurators } = useVaults({ chainId, staleTime: STALE_TIME });
+  const { vaults, topCurators, userShares, refetchBalanceOf } = useVaults({
+    chainId,
+    staleTime: STALE_TIME,
+    userAddress,
+  });
 
   // MARK: Fetch metadata for every ERC20 asset
   const tokenAddresses = useMemo(() => {
@@ -54,31 +57,6 @@ export function EarnSubPage() {
     });
     return tokens;
   }, [tokenAddresses, tokenData]);
-
-  // MARK: Fetch user's balance in each vault
-  const { data: balanceOfData, refetch: refetchBalanceOf } = useReadContracts({
-    contracts: vaultsData?.map(
-      (vaultData) =>
-        ({
-          chainId,
-          address: vaultData.vault.vault,
-          abi: metaMorphoAbi,
-          functionName: "balanceOf",
-          args: userAddress && [userAddress],
-        }) as const,
-    ),
-    allowFailure: false,
-    query: {
-      enabled: chainId !== undefined && !!userAddress,
-      staleTime: STALE_TIME,
-      gcTime: Infinity,
-    },
-  });
-
-  const userShares = useMemo(
-    () => Object.fromEntries(vaultsData?.map((vaultData, idx) => [vaultData.vault.vault, balanceOfData?.[idx]]) ?? []),
-    [vaultsData, balanceOfData],
-  ) as { [vault: Address]: bigint | undefined };
 
   const rows = useMemo(() => {
     return vaults.map((vault) => {

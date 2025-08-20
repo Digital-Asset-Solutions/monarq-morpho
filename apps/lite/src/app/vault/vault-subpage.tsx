@@ -1,16 +1,19 @@
+import { CuratorTableCell } from "@/components/earn-table";
 import { useVaults } from "@/hooks/use-vaults";
 import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
+import { DisplayableCurators } from "@/lib/curators";
 import { useTokenPrices } from "@/lib/prices";
 import { getTokenURI } from "@/lib/tokens";
+import { AccrualVault } from "@morpho-org/blue-sdk";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/components/shadcn/tabs";
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
-import { Token } from "@morpho-org/uikit/lib/utils";
+import { formatBalance, formatReadableDecimalNumber, Token } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
-import { Address, Chain, erc20Abi, erc4626Abi, parseUnits } from "viem";
+import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
 import { useReadContracts } from "wagmi";
 import { useAccount, useReadContract } from "wagmi";
 
@@ -47,38 +50,57 @@ function VaultHeader() {
 }
 
 // Vault Title Section Component
-function VaultTitleSection() {
+function VaultTitleSection({ title, imageSrc }: { title: string; imageSrc: string }) {
   return (
     <div className="mb-8 flex items-center gap-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-600">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full">
         <span className="text-lg font-bold text-white">
-          <img src="/images/usdp.png" alt="USDp" className="h-6 w-6" />
+          <img src={imageSrc} alt={title} />
         </span>
       </div>
-      <h1 className="text-3xl font-bold">Steakhouse USDp</h1>
+      <h1 className="text-3xl font-bold">{title}</h1>
     </div>
   );
 }
 
 // Stats Grid Component
-function StatsGrid() {
+function StatsGrid({
+  vault,
+  userShare,
+  tokenPriceInUSD,
+}: {
+  vault: AccrualVault;
+  userShare: bigint;
+  tokenPriceInUSD: number;
+}) {
+  const apy = Number(formatUnits(vault.netApy, 18)) * 100;
+  const totalDeposits = Number(formatUnits(vault.totalSupply, 18)) * tokenPriceInUSD;
+  const liquidity = Number(formatUnits(vault.totalSupply - vault.totalAssets, 18)) * tokenPriceInUSD;
+  const yourDeposit = Number(formatUnits(userShare, 18)) * tokenPriceInUSD;
+
   return (
     <div className="mb-8 grid grid-cols-4 gap-6">
       <div>
         <p className="text-muted-foreground mb-1 text-sm">Total Deposits</p>
-        <p className="text-2xl font-semibold">$99.99 M</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: totalDeposits, maxDecimals: 2, letters: true })}
+        </p>
       </div>
       <div>
         <p className="text-muted-foreground mb-1 text-sm">Liquidity</p>
-        <p className="text-2xl font-semibold">$99.99 M</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: liquidity, maxDecimals: 2, letters: true })}
+        </p>
       </div>
       <div>
         <p className="text-muted-foreground mb-1 text-sm">APY</p>
-        <p className="text-2xl font-semibold">99.99 %</p>
+        <p className="text-2xl font-semibold">{formatReadableDecimalNumber({ value: apy, maxDecimals: 2 })} %</p>
       </div>
       <div>
         <p className="text-muted-foreground mb-1 text-sm">Your Deposit</p>
-        <p className="text-2xl font-semibold">$99,999.99</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: yourDeposit, maxDecimals: 2, letters: true })}
+        </p>
       </div>
     </div>
   );
@@ -99,7 +121,19 @@ function AboutSection() {
 }
 
 // Vault Details Grid Component
-function VaultDetailsGrid() {
+function VaultDetailsGrid({
+  vault,
+  asset,
+  curators,
+  chain,
+}: {
+  vault: AccrualVault;
+  asset: Token;
+  curators: DisplayableCurators[];
+  chain: Chain;
+}) {
+  const fee = Number(formatUnits(vault.fee, 18)) * 100;
+
   return (
     <div className="mb-8 grid grid-cols-3 gap-6">
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
@@ -107,25 +141,24 @@ function VaultDetailsGrid() {
         <div className="flex items-center gap-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600">
             <span className="text-xs text-white">
-              <img src="/images/usdp.png" alt="USDp" className="h-6 w-6" />
+              <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6" />
             </span>
           </div>
-          <span className="font-semibold">USDp</span>
+          <span className="font-semibold">{asset.symbol}</span>
         </div>
       </div>
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
         <p className="text-muted-foreground mb-2 text-sm">Performance Fee</p>
-        <p className="font-semibold">99%</p>
+        <p className="font-semibold">{formatReadableDecimalNumber({ value: fee, maxDecimals: 2 })}%</p>
       </div>
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
-        <p className="text-muted-foreground mb-2 text-sm">Curator</p>
+        <p className="text-muted-foreground mb-2 text-sm">Curators</p>
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600">
-            <span className="text-xs text-white">
-              <img src="/images/steakhouse.png" alt="Steakhouse" className="h-6 w-6" />
-            </span>
-          </div>
-          <span className="font-semibold">Steakhouse Financial</span>
+          {curators && curators.length > 0 ? (
+            curators.map((curator) => <span>{curator.name.name}</span>)
+          ) : (
+            <p>No curators</p>
+          )}
         </div>
       </div>
     </div>
@@ -182,22 +215,19 @@ function MarketAllocationSection() {
 function InteractionSection({
   vaultAddress,
   asset,
-  chainId,
+  userShare,
+  vault,
+  tokenPriceInUSD,
 }: {
   vaultAddress: Address;
   asset: Token;
-  chainId: number;
+  userShare: bigint;
+  vault: AccrualVault;
+  tokenPriceInUSD: number;
 }) {
   const { address: userAddress } = useAccount();
-  const { data: usdPrices } = useTokenPrices(chainId, [asset.address]);
   const [selectedTab, setSelectedTab] = useState(Actions.Deposit);
   const [textInputValue, setTextInputValue] = useState("");
-  const [tokenPriceInUSD, setTokenPriceInUSD] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!usdPrices || !asset.address) return;
-    setTokenPriceInUSD(usdPrices[asset.address.toLowerCase() as Address]?.price_usd);
-  }, [usdPrices, asset.address]);
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: asset.address,
@@ -216,8 +246,17 @@ function InteractionSection({
     allowFailure: false,
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
-
   const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
+  const userBalance = formatUnits(userShare, asset.decimals ?? 18);
+  const projectedBalance = formatUnits(
+    selectedTab === Actions.Deposit ? userShare + (inputValue ?? 0n) : userShare - (inputValue ?? 0n),
+    asset.decimals ?? 18,
+  );
+  const apy = formatUnits(vault.netApy, 18);
+  const monthlyEarnings = parseFloat(userBalance) * parseFloat(apy);
+  const yearlyEarnings = monthlyEarnings * 12;
+  const projectedMonthlyEarningsUSD = parseFloat(projectedBalance) * parseFloat(apy) * (tokenPriceInUSD ?? 0);
+  const projectedYearlyEarningsUSD = projectedMonthlyEarningsUSD * 12;
   const isMaxed = inputValue === maxes?.[0];
 
   const approvalTxnConfig =
@@ -348,38 +387,51 @@ function InteractionSection({
 
         <div className="border-border w-full rounded-lg border-t bg-white p-4">
           <div>
-            <span className="text-muted-foreground text-xs">Your Deposit (USDp)</span>
+            <span className="text-muted-foreground text-xs">Your Deposit ({asset.symbol})</span>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">99.99</span>
-              <span className="text-xl">➤</span>
-              <span className="font-medium">99,999.99</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-muted-foreground text-xs">APY</span>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">99.99</span>
-              <span className="text-xl">➤</span>
-              <span className="font-medium">99.99%</span>
+              <span className={inputValue && inputValue > 0n ? "text-muted-foreground" : ""}>
+                {formatReadableDecimalNumber({ value: parseFloat(userBalance), maxDecimals: 2 })}
+              </span>
+              {!!inputValue && inputValue > 0n && (
+                <>
+                  <span className="text-xl">
+                    <ChevronRight />
+                  </span>
+                  <span className="font-medium">
+                    {formatReadableDecimalNumber({ value: parseFloat(projectedBalance), maxDecimals: 2 })}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
           <div>
             <span className="text-muted-foreground text-xs">Projected Earnings / Month (USD)</span>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">99.99</span>
-              <span className="text-xl">➤</span>
-              <span className="font-medium">99.999</span>
+              <span className="text-muted-foreground">
+                ${formatReadableDecimalNumber({ value: monthlyEarnings, maxDecimals: 2 })}
+              </span>
+              <span className="text-xl">
+                <ChevronRight />
+              </span>
+              <span className="font-medium">
+                ${formatReadableDecimalNumber({ value: projectedMonthlyEarningsUSD, maxDecimals: 2 })}
+              </span>
             </div>
           </div>
 
           <div>
             <span className="text-muted-foreground text-xs">Projected Earnings / Year (USD)</span>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">99.99</span>
-              <span className="text-xl">➤</span>
-              <span className="font-medium">9,999.999</span>
+              <span className="text-muted-foreground">
+                ${formatReadableDecimalNumber({ value: yearlyEarnings, maxDecimals: 2 })}
+              </span>
+              <span className="text-xl">
+                <ChevronRight />
+              </span>
+              <span className="font-medium">
+                ${formatReadableDecimalNumber({ value: projectedYearlyEarningsUSD, maxDecimals: 2 })}
+              </span>
             </div>
           </div>
         </div>
@@ -392,11 +444,14 @@ function InteractionSection({
 export function VaultSubPage() {
   const { address: vaultAddress } = useParams();
   const { chain } = useOutletContext() as { chain?: Chain };
-  const chainId = chain?.id;
-  const { vaultsData, markets } = useVaults({ chainId, staleTime: STALE_TIME });
-  const currentVault = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
-  const tokenAddress = currentVault?.vault.asset;
-  const currentMarket = markets[currentVault?.vault.withdrawQueue[0] as Address];
+  const chainId = chain?.id ?? 1;
+  const { vaultsData, vaults, markets, userShares, marketVaults } = useVaults({ chainId, staleTime: STALE_TIME });
+  const currentVaultData = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
+  const currentVault = vaults?.find((vault) => vault.address === vaultAddress);
+  const tokenAddress = currentVaultData?.vault.asset;
+  const userShare = userShares[vaultAddress as Address] ?? 0n;
+  const currentMarket = markets[currentVaultData?.vault.withdrawQueue[0] as Address];
+  const curators = marketVaults.get(currentVaultData?.vault.vault as Address)?.map((vault) => vault.curators);
 
   const { data: symbol } = useReadContract({
     address: tokenAddress as Address,
@@ -415,21 +470,46 @@ export function VaultSubPage() {
     imageSrc: getTokenURI({ symbol: symbol as string, address: tokenAddress as Address, chainId }),
   };
 
+  const [tokenPriceInUSD, setTokenPriceInUSD] = useState<number | undefined>(undefined);
+  const { data: usdPrices } = useTokenPrices(chainId, [asset.address]);
+
+  useEffect(() => {
+    if (!usdPrices || !asset.address) return;
+    setTokenPriceInUSD(usdPrices[asset.address.toLowerCase() as Address]?.price_usd);
+  }, [usdPrices, asset.address]);
+
+  if (!currentVault || !currentVaultData) return null;
+
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       <div className="flex h-full grow justify-center pb-16">
         <div className="mx-auto flex max-w-7xl gap-10 px-5 py-3">
           <div className="w-8/12">
             <VaultHeader />
-            <VaultTitleSection />
-            <StatsGrid />
+            <VaultTitleSection title={currentVaultData.vault.name} imageSrc={asset.imageSrc ?? ""} />
+            <StatsGrid
+              vault={currentVault as AccrualVault}
+              userShare={userShare}
+              tokenPriceInUSD={tokenPriceInUSD ?? 0}
+            />
             <AboutSection />
-            <VaultDetailsGrid />
+            <VaultDetailsGrid
+              vault={currentVault as AccrualVault}
+              asset={asset}
+              curators={curators as DisplayableCurators[]}
+              chain={chain as Chain}
+            />
             <MarketAllocationSection />
           </div>
 
           <div className="w-4/12">
-            <InteractionSection vaultAddress={vaultAddress as Address} asset={asset} chainId={chainId as number} />
+            <InteractionSection
+              vaultAddress={vaultAddress as Address}
+              asset={asset}
+              tokenPriceInUSD={tokenPriceInUSD ?? 0}
+              userShare={userShare}
+              vault={currentVault as AccrualVault}
+            />
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
   VaultMarketConfig,
   VaultMarketPublicAllocatorConfig,
 } from "@morpho-org/blue-sdk";
+import { metaMorphoAbi } from "@morpho-org/uikit/assets/abis/meta-morpho";
 import { metaMorphoFactoryAbi } from "@morpho-org/uikit/assets/abis/meta-morpho-factory";
 import useContractEvents from "@morpho-org/uikit/hooks/use-contract-events/use-contract-events";
 import { readAccrualVaults, readAccrualVaultsStateOverride } from "@morpho-org/uikit/lens/read-vaults";
@@ -14,7 +15,7 @@ import { tac } from "@morpho-org/uikit/lib/chains/tac";
 import { CORE_DEPLOYMENTS, getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
 import { useEffect, useMemo } from "react";
 import { Address, zeroAddress, type Hex } from "viem";
-import { useReadContract } from "wagmi";
+import { useReadContract, useReadContracts } from "wagmi";
 
 import { useMarkets } from "@/hooks/use-markets";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
@@ -26,9 +27,10 @@ interface UseVaultsParams {
   chainId?: number;
   staleTime?: number;
   fetchPrices?: boolean;
+  userAddress?: Address;
 }
 
-export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices }: UseVaultsParams) {
+export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAddress }: UseVaultsParams) {
   const [morpho, factory, factoryV1_1] = useMemo(
     () => [
       getContractDeploymentInfo(chainId, "Morpho"),
@@ -201,6 +203,31 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices }: UseV
     return map;
   }, [vaultsData, topCurators]);
 
+  // MARK: Fetch user's balance in each vault
+  const { data: balanceOfData, refetch: refetchBalanceOf } = useReadContracts({
+    contracts: vaultsData?.map(
+      (vaultData) =>
+        ({
+          chainId,
+          address: vaultData.vault.vault,
+          abi: metaMorphoAbi,
+          functionName: "balanceOf",
+          args: userAddress && [userAddress],
+        }) as const,
+    ),
+    allowFailure: false,
+    query: {
+      enabled: chainId !== undefined && !!userAddress,
+      staleTime,
+      gcTime: Infinity,
+    },
+  });
+
+  const userShares = useMemo(
+    () => Object.fromEntries(vaultsData?.map((vaultData, idx) => [vaultData.vault.vault, balanceOfData?.[idx]]) ?? []),
+    [vaultsData, balanceOfData],
+  ) as { [vault: Address]: bigint | undefined };
+
   return {
     vaults,
     vaultsData,
@@ -212,5 +239,8 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices }: UseV
     borrowMarkets,
     borrowMarketsArray,
     marketVaults,
+    // User balance exports
+    userShares,
+    refetchBalanceOf,
   };
 }

@@ -48,6 +48,40 @@ export function formatBalance(
   return formatUnits(balance, decimals).concat(suffixes[suffixIdx]);
 }
 
+export const formatReadableDecimalNumber = (params: {
+  value: number;
+  minDecimals?: number;
+  maxDecimals?: number;
+  letters?: boolean;
+}): string => {
+  const { value, minDecimals, maxDecimals, letters } = params;
+  if (!value) return "0";
+
+  if (letters) {
+    if (value >= 1_000_000) {
+      return (
+        (value / 1_000_000).toLocaleString("en-US", {
+          maximumFractionDigits: maxDecimals,
+          minimumFractionDigits: minDecimals,
+        }) + "M"
+      );
+    }
+    if (value >= 1_000) {
+      return (
+        (value / 1_000).toLocaleString("en-US", {
+          maximumFractionDigits: maxDecimals,
+          minimumFractionDigits: minDecimals,
+        }) + "K"
+      );
+    }
+  }
+
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: maxDecimals,
+    minimumFractionDigits: minDecimals,
+  });
+};
+
 export function formatBalanceWithSymbol(
   balance: bigint,
   decimals: number,

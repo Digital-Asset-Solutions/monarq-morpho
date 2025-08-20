@@ -34,6 +34,7 @@ export function BorrowSubPage() {
     chainId,
     staleTime: STALE_TIME,
     fetchPrices: true,
+    userAddress,
   });
 
   const { data: erc20Symbols } = useReadContracts({
