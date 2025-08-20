@@ -1,23 +1,17 @@
 import { AccrualPosition } from "@morpho-org/blue-sdk";
 import { restructure } from "@morpho-org/blue-sdk-viem";
-import { metaMorphoFactoryAbi } from "@morpho-org/uikit/assets/abis/meta-morpho-factory";
 import { morphoAbi } from "@morpho-org/uikit/assets/abis/morpho";
-import useContractEvents from "@morpho-org/uikit/hooks/use-contract-events/use-contract-events";
-import { readAccrualVaults, readAccrualVaultsStateOverride } from "@morpho-org/uikit/lens/read-vaults";
-import { tac } from "@morpho-org/uikit/lib/chains/tac";
-import { CORE_DEPLOYMENTS, getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
+import { getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
 import { Token } from "@morpho-org/uikit/lib/utils";
 import { useMemo } from "react";
 import { useOutletContext } from "react-router";
-import { type Address, erc20Abi, type Chain, zeroAddress, type Hex } from "viem";
-import { useAccount, useReadContract, useReadContracts } from "wagmi";
+import { type Address, erc20Abi, type Chain, type Hex } from "viem";
+import { useAccount, useReadContracts } from "wagmi";
 
 import { BorrowPositionTable, BorrowTable } from "@/components/borrow-table";
-import { useMarkets } from "@/hooks/use-markets";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
-import { useTopNCurators } from "@/hooks/use-top-n-curators";
-import { type DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
+import { useVaults } from "@/hooks/use-vaults";
 import { getTokenURI } from "@/lib/tokens";
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -32,108 +26,15 @@ export function BorrowSubPage() {
   const { chain } = useOutletContext() as { chain?: Chain };
   const chainId = chain?.id;
 
-  const [morpho, factory, factoryV1_1] = useMemo(
-    () => [
-      getContractDeploymentInfo(chainId, "Morpho"),
-      getContractDeploymentInfo(chainId, "MetaMorphoFactory"),
-      getContractDeploymentInfo(chainId, "MetaMorphoV1_1Factory"),
-    ],
-    [chainId],
-  );
+  const morpho = useMemo(() => getContractDeploymentInfo(chainId, "Morpho"), [chainId]);
 
   const borrowingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.BORROW, userAddress });
 
-  // MARK: Index `MetaMorphoFactory.CreateMetaMorpho` on all factory versions to get a list of all vault addresses
-  const {
-    logs: { all: createMetaMorphoEvents },
-    fractionFetched,
-  } = useContractEvents({
+  const { borrowMarketsArray: marketsArr, marketVaults } = useVaults({
     chainId,
-    abi: metaMorphoFactoryAbi,
-    address: factoryV1_1 ? [factoryV1_1.address].concat(factory ? [factory.address] : []) : [],
-    fromBlock: factory?.fromBlock ?? factoryV1_1?.fromBlock,
-    reverseChronologicalOrder: true,
-    eventName: "CreateMetaMorpho",
-    strict: true,
-    query: { enabled: chainId !== undefined },
+    staleTime: STALE_TIME,
+    fetchPrices: true,
   });
-
-  // MARK: Fetch additional data for vaults owned by the top 1000 curators from core deployments
-  const topCurators = useTopNCurators({ n: "all", verifiedOnly: true, chainIds: [...CORE_DEPLOYMENTS] });
-  const { data: vaultsData } = useReadContract({
-    chainId,
-    ...readAccrualVaults(
-      morpho?.address ?? "0x",
-      createMetaMorphoEvents.map((ev) => ev.args.metaMorpho),
-      // NOTE: This assumes that if a curator controls an address on one chain, they control it across all chains.
-      topCurators.flatMap((curator) => curator.addresses?.map((entry) => entry.address as Address) ?? []),
-      // TODO: For now, we use bytecode deployless reads on TAC, since the RPC doesn't support `stateOverride`.
-      //       This means we're forfeiting multicall in this special case, but at least it works. Once we have
-      //       a TAC RPC that supports `stateOverride`, remove the special case.
-      // @ts-expect-error function signature overloading was meant for hard-coded `true` or `false`
-      chainId === tac.id,
-    ),
-    stateOverride: chainId === tac.id ? undefined : [readAccrualVaultsStateOverride()],
-    query: {
-      enabled: chainId !== undefined && fractionFetched > 0.99 && !!morpho?.address,
-      staleTime: STALE_TIME,
-      gcTime: Infinity,
-      notifyOnChangeProps: ["data"],
-    },
-  });
-
-  const marketIds = useMemo(
-    () => [
-      ...new Set(
-        vaultsData?.flatMap((d) =>
-          d.allocations
-            .filter((alloc) => alloc.config.enabled && alloc.position.supplyShares > 0n)
-            .map((alloc) => alloc.id),
-        ) ?? [],
-      ),
-    ],
-    [vaultsData],
-  );
-  const markets = useMarkets({ chainId, marketIds, staleTime: STALE_TIME, fetchPrices: true });
-  const marketsArr = useMemo(() => {
-    const marketsArr = Object.values(markets).filter(
-      (market) =>
-        market.totalSupplyAssets > 0n &&
-        ![market.params.collateralToken, market.params.loanToken, market.params.irm, market.params.oracle].includes(
-          zeroAddress,
-        ),
-    );
-    marketsArr.sort((a, b) => {
-      const primary = a.params.loanToken.localeCompare(b.params.loanToken);
-      const secondary = a.liquidity > b.liquidity ? -1 : 1;
-      return primary === 0 ? secondary : primary;
-    });
-    return marketsArr;
-  }, [markets]);
-  const marketVaults = useMemo(() => {
-    const map = new Map<
-      Hex,
-      { name: string; address: Address; totalAssets: bigint; curators: DisplayableCurators }[]
-    >();
-
-    vaultsData?.forEach((vaultData) => {
-      vaultData.allocations.forEach((allocation) => {
-        if (!allocation.config.enabled || allocation.position.supplyShares === 0n) return;
-
-        if (!map.has(allocation.id)) {
-          map.set(allocation.id, []);
-        }
-        map.get(allocation.id)!.push({
-          name: vaultData.vault.name,
-          address: vaultData.vault.vault,
-          totalAssets: vaultData.vault.totalAssets,
-          curators: getDisplayableCurators({ ...vaultData.vault, address: vaultData.vault.vault }, topCurators),
-        });
-      });
-    });
-
-    return map;
-  }, [vaultsData, topCurators]);
 
   const { data: erc20Symbols } = useReadContracts({
     contracts: marketsArr
