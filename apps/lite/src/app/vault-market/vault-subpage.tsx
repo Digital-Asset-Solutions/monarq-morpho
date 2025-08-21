@@ -2,9 +2,15 @@ import { AccrualVault, VaultMarketAllocation } from "@morpho-org/blue-sdk";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/components/shadcn/tabs";
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
-import { computeNetApy, formatApy, formatReadableDecimalNumber, Token } from "@morpho-org/uikit/lib/utils";
+import {
+  computeNetApy,
+  formatApy,
+  formatReadableDecimalNumber,
+  Token,
+  getChainSlug,
+} from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
 import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
@@ -15,6 +21,7 @@ import { MerklOpportunities, useMerklOpportunities } from "@/hooks/use-merkl-opp
 import { useToken } from "@/hooks/use-token";
 import { useTokens } from "@/hooks/use-tokens";
 import { useVaults } from "@/hooks/use-vaults";
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
 import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 import { useTokenPrices } from "@/lib/prices";
@@ -79,11 +86,11 @@ function StatsGrid({
   const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
   const { netApy } = computeNetApy(vault.apy, vault.fee, rewardsApy, "earn");
   const totalDeposits = Number(formatUnits(vault.totalSupply, 18)) * tokenPriceInUSD;
-  const liquidity = Number(formatUnits(vault.totalSupply - vault.totalAssets, 18)) * tokenPriceInUSD;
+  const liquidity = Number(formatUnits(vault.totalAssets, 18)) * tokenPriceInUSD;
   const yourDeposit = Number(formatUnits(userShare, 18)) * tokenPriceInUSD;
 
   return (
-    <div className="mb-8 grid grid-cols-4 gap-6">
+    <div className="mb-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
       <div>
         <p className="text-muted-foreground mb-1 text-sm">Total Deposits</p>
         <p className="text-2xl font-semibold">
@@ -111,18 +118,18 @@ function StatsGrid({
 }
 
 // About Section Component
-function AboutSection() {
-  return (
-    <div className="mb-8">
-      <h2 className="text-lg font-semibold">About the Vault</h2>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        Stake your $USDp and start raking in some chill passive earnings with $sUSDp!Stake your $USDp and start raking
-        in some chill passive earnings with $sUSDp!Stake your $USDp and start raking in some chill passive earnings with
-        $sUSDp!
-      </p>
-    </div>
-  );
-}
+// function AboutSection() {
+//   return (
+//     <div className="mb-8">
+//       <h2 className="text-lg font-semibold">About the Vault</h2>
+//       <p className="text-muted-foreground text-sm leading-relaxed">
+//         Stake your $USDp and start raking in some chill passive earnings with $sUSDp!Stake your $USDp and start raking
+//         in some chill passive earnings with $sUSDp!Stake your $USDp and start raking in some chill passive earnings with
+//         $sUSDp!
+//       </p>
+//     </div>
+//   );
+// }
 
 // Vault Details Grid Component
 function VaultDetailsGrid({
@@ -137,7 +144,7 @@ function VaultDetailsGrid({
   const fee = Number(formatUnits(vault.fee, 18)) * 100;
 
   return (
-    <div className="mb-8 grid grid-cols-3 gap-6">
+    <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
         <p className="text-muted-foreground mb-2 text-sm">Vault Token</p>
         <div className="flex items-center gap-2">
@@ -178,11 +185,13 @@ function MarketAllocationSection({
   chainId,
   asset,
   tokenPriceInUSD,
+  chain,
 }: {
   allocations: Map<string, VaultMarketAllocation> | undefined;
   chainId: number;
   asset: Token;
   tokenPriceInUSD: number;
+  chain?: Chain;
 }) {
   // Collect all unique token addresses from allocations
   const allocationTokenAddresses = useMemo(() => {
@@ -206,10 +215,10 @@ function MarketAllocationSection({
       const supply =
         Number(formatUnits(allocation.position.market.totalSupplyAssets, asset?.decimals ?? 18)) *
         (tokenPriceInUSD ?? 0);
-      // TODO: fix cap
       const cap = Number(formatUnits(allocation.config.cap, asset?.decimals ?? 18)) * (tokenPriceInUSD ?? 0);
 
       return {
+        marketId: allocation.position.market.id,
         collateralAsset,
         loanAsset,
         supply,
@@ -217,6 +226,34 @@ function MarketAllocationSection({
       };
     });
   }, [allocations, allocationTokens, asset?.decimals, tokenPriceInUSD]);
+
+  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+
+  // Sort state
+  const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
+    column: null,
+    direction: null,
+  });
+
+  // Sort handler
+  const handleSort = createSortHandler(sort, setSort);
+
+  // Get sort value for an allocation
+  const getSortValue = (allocation: typeof formattedAllocations[0], column: string): number => {
+    switch (column) {
+      case "allocation_percent":
+        return (allocation.supply / formattedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100;
+      case "allocation_usd":
+        return allocation.supply;
+      case "supply_cap":
+        return allocation.cap;
+      default:
+        return 0;
+    }
+  };
+
+  // Apply sorting
+  const sortedAllocations = useSorting(formattedAllocations, sort, getSortValue);
 
   return (
     <div className="mb-8 rounded-lg border bg-white py-6 shadow-sm">
@@ -228,71 +265,88 @@ function MarketAllocationSection({
       </div>
 
       <div>
-        <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 text-sm font-medium">
+        <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b px-4 py-2 text-sm font-medium">
           <div className="col-span-2 flex items-center gap-1">
-            Market <ChevronDown className="h-4 w-4" />
+            Market 
           </div>
-          <div className="flex items-center gap-1">
-            Allocation (%) <ChevronDown className="h-4 w-4" />
-          </div>
-          <div className="flex items-center gap-1">
-            Allocation ($) <ChevronDown className="h-4 w-4" />
-          </div>
-          <div className="flex items-center gap-1">
-            Supply Cap <ChevronDown className="h-4 w-4" />
-          </div>
+          <SortableTableHead
+            sortKey="allocation_percent"
+            currentSort={sort}
+            onSort={handleSort}
+            className="flex items-center gap-1 text-sm font-medium p-0"
+          >
+            Allocation (%)
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="allocation_usd"
+            currentSort={sort}
+            onSort={handleSort}
+            className="flex items-center gap-1 text-sm font-medium p-0"
+          >
+            Allocation ($)
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="supply_cap"
+            currentSort={sort}
+            onSort={handleSort}
+            className="flex items-center gap-1 text-sm font-medium p-0"
+          >
+            Supply Cap
+          </SortableTableHead>
         </div>
 
         <div>
-          {formattedAllocations.length > 0 ? (
-            formattedAllocations.map((allocation, index) => (
-              <div key={index} className="grid grid-cols-5 items-center gap-4 border-b p-4">
-                <div className="col-span-2 flex items-center gap-2">
-                  {allocation.collateralAsset && (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full">
-                      <img
-                        src={allocation.collateralAsset.imageSrc}
-                        alt={allocation.collateralAsset.symbol}
-                        className="h-6 w-6 rounded-full"
-                      />
-                    </div>
-                  )}
-                  {allocation.loanAsset && (
-                    <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full">
-                      <img
-                        src={allocation.loanAsset.imageSrc}
-                        alt={allocation.loanAsset.symbol}
-                        className="-ml-3 h-6 w-6 rounded-full"
-                      />
-                    </div>
-                  )}
-                  <span className="font-medium">
-                    {allocation.collateralAsset?.symbol} / {allocation.loanAsset?.symbol}
-                  </span>
+          {sortedAllocations.length > 0 ? (
+            sortedAllocations.map((allocation, index) => (
+              <Link key={index} to={`/${chainSlug}/market/${allocation.marketId}`} className="contents">
+                <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
+                  <div className="col-span-2 flex items-center gap-2">
+                    {allocation.collateralAsset && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full">
+                        <img
+                          src={allocation.collateralAsset.imageSrc}
+                          alt={allocation.collateralAsset.symbol}
+                          className="h-6 w-6 rounded-full"
+                        />
+                      </div>
+                    )}
+                    {allocation.loanAsset && (
+                      <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full">
+                        <img
+                          src={allocation.loanAsset.imageSrc}
+                          alt={allocation.loanAsset.symbol}
+                          className="-ml-3 h-6 w-6 rounded-full"
+                        />
+                      </div>
+                    )}
+                    <span className="font-medium">
+                      {allocation.collateralAsset?.symbol} / {allocation.loanAsset?.symbol}
+                    </span>
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    {formatReadableDecimalNumber({
+                      value: (allocation.supply / sortedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100,
+                      maxDecimals: 2,
+                      letters: true,
+                    })}
+                    %
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    $
+                    {formatReadableDecimalNumber({
+                      value: allocation.supply,
+                      maxDecimals: 2,
+                      letters: true,
+                    })}
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    ${formatReadableDecimalNumber({ value: allocation.cap, maxDecimals: 2, letters: true })}
+                  </div>
                 </div>
-                <div className="text-muted-foreground text-sm">
-                  {formatReadableDecimalNumber({
-                    value: (allocation.supply / formattedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100,
-                    maxDecimals: 2,
-                    letters: true,
-                  })}
-                  %
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  $
-                  {formatReadableDecimalNumber({
-                    value: allocation.supply,
-                    maxDecimals: 2,
-                    letters: true,
-                  })}
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  ${formatReadableDecimalNumber({ value: allocation.cap, maxDecimals: 2, letters: true })}
-                </div>
-              </div>
+              </Link>
             ))
           ) : (
-            <p>No allocations</p>
+            <p className="text-muted-foreground p-4 text-center">No allocations</p>
           )}
         </div>
       </div>
@@ -346,11 +400,11 @@ function InteractionSection({
   const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
   const { netApy } = computeNetApy(vault.apy, vault.fee, rewardsApy, "earn");
   const apyToComputeEarnings = formatUnits(netApy, 18);
-  const monthlyEarnings = parseFloat(userBalance) * parseFloat(apyToComputeEarnings);
-  const yearlyEarnings = monthlyEarnings * 12;
-  const projectedMonthlyEarningsUSD =
+  const yearlyEarnings = parseFloat(userBalance) * parseFloat(apyToComputeEarnings);
+  const monthlyEarnings = yearlyEarnings / 12;
+  const projectedYearlyEarningsUSD =
     parseFloat(projectedBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
-  const projectedYearlyEarningsUSD = projectedMonthlyEarningsUSD * 12;
+  const projectedMonthlyEarningsUSD = projectedYearlyEarningsUSD / 12;
   const isMaxed = inputValue === maxes?.[0];
 
   const approvalTxnConfig =
@@ -476,7 +530,7 @@ function InteractionSection({
         </Tabs>
       </div>
 
-      <div className="border-border rounded-lg border bg-white shadow-sm">
+      <div className="border-border mb-8 rounded-lg border bg-white shadow-sm">
         <h3 className="bg-primary -mb-1 rounded-t-lg p-5 text-lg">Your Position</h3>
 
         <div className="border-border w-full rounded-lg border-t bg-white p-4">
@@ -564,8 +618,8 @@ export function VaultSubPage() {
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       <div className="flex h-full grow justify-center pb-16">
-        <div className="mx-auto flex max-w-7xl gap-10 px-5 py-3">
-          <div className="w-8/12">
+        <div className="flex w-full max-w-7xl flex-col gap-10 py-3 lg:flex-row lg:px-5">
+          <div className="w-full lg:w-8/12">
             <VaultHeader />
             <VaultTitleSection title={currentVaultData.vault.name} imageSrc={asset.imageSrc ?? ""} />
             <StatsGrid
@@ -574,17 +628,28 @@ export function VaultSubPage() {
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
               rewards={rewards}
             />
-            <AboutSection />
+            {/* <AboutSection /> */}
             <VaultDetailsGrid vault={currentVault as AccrualVault} asset={asset} curators={curators} />
+            <div className="block lg:hidden">
+              <InteractionSection
+                vaultAddress={vaultAddress as Address}
+                asset={asset}
+                userShare={userShare}
+                vault={currentVault as AccrualVault}
+                tokenPriceInUSD={tokenPriceInUSD ?? 0}
+                rewards={rewards}
+              />
+            </div>
             <MarketAllocationSection
               allocations={allocations}
               chainId={chainId}
               asset={asset}
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
+              chain={chain}
             />
           </div>
 
-          <div className="w-4/12">
+          <div className="hidden w-4/12 lg:block">
             <InteractionSection
               vaultAddress={vaultAddress as Address}
               asset={asset}
