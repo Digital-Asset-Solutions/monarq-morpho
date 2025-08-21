@@ -12,10 +12,10 @@ import { Link, useOutletContext, useParams } from "react-router";
 import { Address, Chain, erc20Abi, formatUnits, parseUnits } from "viem";
 import { useReadContracts, useAccount, useReadContract } from "wagmi";
 
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { useMarkets } from "@/hooks/use-markets";
 import { useToken } from "@/hooks/use-token";
 import { useVaults } from "@/hooks/use-vaults";
-import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
 import { DisplayableCurators } from "@/lib/curators";
 import { useTokenPrices } from "@/lib/prices";
@@ -195,19 +195,22 @@ function VaultsSection({
   const handleSort = createSortHandler(sort, setSort);
 
   // Get sort value for a vault
-  const getSortValue = (vault: typeof marketVaults[0], column: string): number => {
+  const getSortValue = (vault: (typeof marketVaults)[0], column: string): number => {
     switch (column) {
-      case "total_supply":
+      case "total_supply": {
         return Number(formatUnits(vault.totalAssets, loanToken.decimals ?? 18));
-      case "supply_share":
+      }
+      case "supply_share": {
         const totalSupply = marketVaults.reduce(
           (acc, v) => acc + Number(formatUnits(v.totalAssets, loanToken.decimals ?? 18)),
           0,
         );
         const vaultSupply = Number(formatUnits(vault.totalAssets, loanToken.decimals ?? 18));
         return totalSupply > 0 ? (vaultSupply / totalSupply) * 100 : 0;
-      default:
+      }
+      default: {
         return 0;
+      }
     }
   };
 
@@ -225,17 +228,13 @@ function VaultsSection({
 
       <div>
         <div className="border-border bg-muted/50 grid grid-cols-4 gap-4 border-b px-4 py-2 text-sm font-medium">
-          <div className="flex items-center gap-1">
-            Vault
-          </div>
-          <div className="flex items-center gap-1">
-            Curators 
-          </div>
+          <div className="flex items-center gap-1">Vault</div>
+          <div className="flex items-center gap-1">Curators</div>
           <SortableTableHead
             sortKey="total_supply"
             currentSort={sort}
             onSort={handleSort}
-            className="flex items-center gap-1 text-sm font-medium p-0"
+            className="flex items-center gap-1 p-0 text-sm font-medium"
           >
             Total Supply
           </SortableTableHead>
@@ -243,7 +242,7 @@ function VaultsSection({
             sortKey="supply_share"
             currentSort={sort}
             onSort={handleSort}
-            className="flex items-center gap-1 text-sm font-medium p-0"
+            className="flex items-center gap-1 p-0 text-sm font-medium"
           >
             Supply Share
           </SortableTableHead>
@@ -583,7 +582,8 @@ function InteractionSection({
                 </TransactionButton>
               ) : (
                 <TransactionButton
-                  variables={getTxnConfig() as any}
+                  // @ts-expect-error - Ignore
+                  variables={getTxnConfig()}
                   disabled={!inputValue}
                   onTxnReceipt={() => {
                     setTextInputValue("");
@@ -737,7 +737,7 @@ export function MarketSubPage() {
   const currentMarket =
     markets.find((market) => market.id === marketId) ||
     Object.values(allMarkets).find((market) => market.id === marketId);
-  const currentMarketVaults = marketVaults.get(marketId as any) ?? [];
+  const currentMarketVaults = marketVaults.get(marketId as Address) ?? [];
 
   // Get user position for this market
   const morpho = useMemo(() => getContractDeploymentInfo(chainId, "Morpho"), [chainId]);

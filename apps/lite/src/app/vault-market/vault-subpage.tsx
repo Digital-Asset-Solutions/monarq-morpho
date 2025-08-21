@@ -16,12 +16,12 @@ import { Link, useOutletContext, useParams } from "react-router";
 import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
 import { useReadContracts, useAccount, useReadContract } from "wagmi";
 
+import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { MerklOpportunities, useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useToken } from "@/hooks/use-token";
 import { useTokens } from "@/hooks/use-tokens";
 import { useVaults } from "@/hooks/use-vaults";
-import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
 import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 import { useTokenPrices } from "@/lib/prices";
@@ -239,7 +239,7 @@ function MarketAllocationSection({
   const handleSort = createSortHandler(sort, setSort);
 
   // Get sort value for an allocation
-  const getSortValue = (allocation: typeof formattedAllocations[0], column: string): number => {
+  const getSortValue = (allocation: (typeof formattedAllocations)[0], column: string): number => {
     switch (column) {
       case "allocation_percent":
         return (allocation.supply / formattedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100;
@@ -266,14 +266,12 @@ function MarketAllocationSection({
 
       <div>
         <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b px-4 py-2 text-sm font-medium">
-          <div className="col-span-2 flex items-center gap-1">
-            Market 
-          </div>
+          <div className="col-span-2 flex items-center gap-1">Market</div>
           <SortableTableHead
             sortKey="allocation_percent"
             currentSort={sort}
             onSort={handleSort}
-            className="flex items-center gap-1 text-sm font-medium p-0"
+            className="flex items-center gap-1 p-0 text-sm font-medium"
           >
             Allocation (%)
           </SortableTableHead>
@@ -281,7 +279,7 @@ function MarketAllocationSection({
             sortKey="allocation_usd"
             currentSort={sort}
             onSort={handleSort}
-            className="flex items-center gap-1 text-sm font-medium p-0"
+            className="flex items-center gap-1 p-0 text-sm font-medium"
           >
             Allocation ($)
           </SortableTableHead>
@@ -289,7 +287,7 @@ function MarketAllocationSection({
             sortKey="supply_cap"
             currentSort={sort}
             onSort={handleSort}
-            className="flex items-center gap-1 text-sm font-medium p-0"
+            className="flex items-center gap-1 p-0 text-sm font-medium"
           >
             Supply Cap
           </SortableTableHead>
