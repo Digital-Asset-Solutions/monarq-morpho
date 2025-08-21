@@ -1,6 +1,7 @@
 import { formatUnits } from "viem";
 
 import { Input } from "@/components/shadcn/input";
+import { formatReadableDecimalNumber } from "@/lib/utils";
 
 function validateTokenAmountInput(input: string, maxDecimals: number): string | null {
   if (input === "" || input === "0") {
@@ -45,9 +46,11 @@ export function TokenAmountInput({
         }}
         disabled={decimals === undefined}
       />
-      <div className="flex items-center justify-between">
+      <div className="flex h-5 items-center justify-between">
         {usdPrice && usdValue && (
-          <p className="text-primary-foreground text-right text-xs font-light">${usdValue.toFixed(2)}</p>
+          <p className="text-primary-foreground text-right text-xs font-light">
+            ${formatReadableDecimalNumber({ value: usdValue, maxDecimals: 2, letters: false })}
+          </p>
         )}
 
         {textMaxValue && (

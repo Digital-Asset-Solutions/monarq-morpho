@@ -1,5 +1,5 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@morpho-org/uikit/components/shadcn/tooltip";
-import { formatApy, getDomain } from "@morpho-org/uikit/lib/utils";
+import { formatApy, getDomain, computeNetApy } from "@morpho-org/uikit/lib/utils";
 import { Sparkles, SignalHigh, ExternalLink, DollarSign } from "lucide-react";
 import { parseUnits } from "viem";
 
@@ -22,8 +22,7 @@ export function ApyTableCell({
 
   // NOTE: To lower-bound, we assume rewards do not compound, so APR=APY.
   const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
-  const feeApy = (fee * nativeApy) / 10n ** 18n;
-  const netApy = mode === "earn" ? nativeApy - feeApy + rewardsApy : nativeApy + feeApy - rewardsApy;
+  const { netApy, feeApy } = computeNetApy(nativeApy, fee, rewardsApy, mode);
 
   return (
     <TooltipProvider>

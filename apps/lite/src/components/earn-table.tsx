@@ -1,7 +1,6 @@
 import { AccrualVault } from "@morpho-org/blue-sdk";
 import { AvatarStack } from "@morpho-org/uikit/components/avatar-stack";
 import { AvatarImage, AvatarFallback, Avatar } from "@morpho-org/uikit/components/shadcn/avatar";
-import { Sheet, SheetTrigger } from "@morpho-org/uikit/components/shadcn/sheet";
 import {
   TableHeader,
   TableRow,
@@ -12,15 +11,21 @@ import {
 } from "@morpho-org/uikit/components/shadcn/table";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@morpho-org/uikit/components/shadcn/tooltip";
 import { useModifierKey } from "@morpho-org/uikit/hooks/use-modifier-key";
-import { formatBalanceWithSymbol, Token, formatLtv, abbreviateAddress } from "@morpho-org/uikit/lib/utils";
+import {
+  formatBalanceWithSymbol,
+  Token,
+  formatLtv,
+  abbreviateAddress,
+  getChainSlug,
+} from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 // @ts-expect-error: this package lacks types
 import humanizeDuration from "humanize-duration";
 import { ClockAlert, ExternalLink } from "lucide-react";
 import { useState, useMemo } from "react";
+import { Link } from "react-router";
 import { Chain, hashMessage, Address, zeroAddress, formatUnits } from "viem";
 
-import { EarnSheetContent } from "@/components/earn-sheet-content";
 import { EarnTableHeader, type EarnTableFilters } from "@/components/filters/earn-table-header";
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
@@ -236,7 +241,6 @@ export function EarnTable({
   depositsMode,
   tokens,
   lendingRewards,
-  refetchPositions,
   displayHeader = true,
 }: {
   chain: Chain | undefined;
@@ -244,7 +248,6 @@ export function EarnTable({
   depositsMode: "totalAssets" | "userAssets";
   tokens: Map<Address, { decimals?: number; symbol?: string }>;
   lendingRewards: ReturnType<typeof useMerklOpportunities>;
-  refetchPositions: () => void;
   displayHeader?: boolean;
 }) {
   const isShiftHeld = useModifierKey("Shift");
@@ -355,51 +358,44 @@ export function EarnTable({
             );
             const rewards = rewardsVault.concat(rewardsMarkets);
 
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+
             return (
-              <Sheet
-                key={row.vault.address}
-                onOpenChange={(isOpen) => {
-                  // Refetch positions on sidesheet close, since user may have sent txns to modify one
-                  if (!isOpen) void refetchPositions();
-                }}
-              >
-                <SheetTrigger asChild>
-                  <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
-                    <TableCell className="py-3">
-                      <VaultTableCell
-                        address={row.vault.address}
-                        symbol={row.vault.name}
-                        imageSrc={row.imageSrc}
-                        chain={chain}
-                        timelock={row.vault.timelock}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {deposits !== undefined && row.asset.decimals !== undefined
-                        ? formatBalanceWithSymbol(deposits, row.asset.decimals, row.asset.symbol, 5, true)
-                        : "－"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex w-min gap-2">
-                        {Object.keys(row.curators).length > 0
-                          ? Object.values(row.curators)
-                              // By default, only show roles with `shouldAlwaysShow == true`.
-                              // When shift key is held, remove filter and show all roles.
-                              .filter((curator) => isShiftHeld || curator.shouldAlwaysShow)
-                              .map((curator) => <CuratorTableCell key={curator.name} {...curator} chain={chain} />)
-                          : ownerText}
-                      </div>
-                    </TableCell>
-                    <TableCell className="min-w-[120px]">
-                      <CollateralsTableCell vault={row.vault} chain={chain} tokens={tokens} />
-                    </TableCell>
-                    <TableCell>
-                      <ApyTableCell nativeApy={row.vault.apy} fee={row.vault.fee} rewards={rewards} mode="earn" />
-                    </TableCell>
-                  </TableRow>
-                </SheetTrigger>
-                <EarnSheetContent vaultAddress={row.vault.address} asset={row.asset} />
-              </Sheet>
+              <Link key={row.vault.address} to={`/${chainSlug}/vault/${row.vault.address}`} className="contents">
+                <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
+                  <TableCell className="py-3">
+                    <VaultTableCell
+                      address={row.vault.address}
+                      symbol={row.vault.name}
+                      imageSrc={row.imageSrc}
+                      chain={chain}
+                      timelock={row.vault.timelock}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {deposits !== undefined && row.asset.decimals !== undefined
+                      ? formatBalanceWithSymbol(deposits, row.asset.decimals, row.asset.symbol, 5, true)
+                      : "－"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex w-min gap-2">
+                      {Object.keys(row.curators).length > 0
+                        ? Object.values(row.curators)
+                            // By default, only show roles with `shouldAlwaysShow == true`.
+                            // When shift key is held, remove filter and show all roles.
+                            .filter((curator) => isShiftHeld || curator.shouldAlwaysShow)
+                            .map((curator) => <CuratorTableCell key={curator.name} {...curator} chain={chain} />)
+                        : ownerText}
+                    </div>
+                  </TableCell>
+                  <TableCell className="min-w-[120px]">
+                    <CollateralsTableCell vault={row.vault} chain={chain} tokens={tokens} />
+                  </TableCell>
+                  <TableCell>
+                    <ApyTableCell nativeApy={row.vault.apy} fee={row.vault.fee} rewards={rewards} mode="earn" />
+                  </TableCell>
+                </TableRow>
+              </Link>
             );
           })}
         </TableBody>

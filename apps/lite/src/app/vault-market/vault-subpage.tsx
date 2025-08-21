@@ -1,21 +1,23 @@
-import { CuratorTableCell } from "@/components/earn-table";
-import { useVaults } from "@/hooks/use-vaults";
-import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
-import { DisplayableCurators } from "@/lib/curators";
-import { useTokenPrices } from "@/lib/prices";
-import { getTokenURI } from "@/lib/tokens";
-import { AccrualVault } from "@morpho-org/blue-sdk";
+import { AccrualVault, VaultMarketAllocation } from "@morpho-org/blue-sdk";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/components/shadcn/tabs";
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
-import { formatBalance, formatReadableDecimalNumber, Token } from "@morpho-org/uikit/lib/utils";
+import { computeNetApy, formatApy, formatReadableDecimalNumber, Token } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
 import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
-import { useReadContracts } from "wagmi";
-import { useAccount, useReadContract } from "wagmi";
+import { useReadContracts, useAccount, useReadContract } from "wagmi";
+
+import * as Merkl from "@/hooks/use-merkl-campaigns";
+import { MerklOpportunities, useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
+import { useToken } from "@/hooks/use-token";
+import { useTokens } from "@/hooks/use-tokens";
+import { useVaults } from "@/hooks/use-vaults";
+import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
+import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
+import { useTokenPrices } from "@/lib/prices";
 
 enum Actions {
   Deposit = "Deposit",
@@ -24,7 +26,6 @@ enum Actions {
 
 const STALE_TIME = 5 * 60 * 1000;
 
-const STYLE_LABEL = "flex items-center justify-between text-xs font-light";
 const STYLE_TAB = "hover:bg-secondary/10 rounded-sm x-5 duration-200 ease-in-out cursor-pointer";
 const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col gap-4 rounded-2xl p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
@@ -55,7 +56,7 @@ function VaultTitleSection({ title, imageSrc }: { title: string; imageSrc: strin
     <div className="mb-8 flex items-center gap-4">
       <div className="flex h-12 w-12 items-center justify-center rounded-full">
         <span className="text-lg font-bold text-white">
-          <img src={imageSrc} alt={title} />
+          <img src={imageSrc} alt={title} className="rounded-full" />
         </span>
       </div>
       <h1 className="text-3xl font-bold">{title}</h1>
@@ -68,12 +69,15 @@ function StatsGrid({
   vault,
   userShare,
   tokenPriceInUSD,
+  rewards,
 }: {
   vault: AccrualVault;
   userShare: bigint;
   tokenPriceInUSD: number;
+  rewards: MerklOpportunities;
 }) {
-  const apy = Number(formatUnits(vault.netApy, 18)) * 100;
+  const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
+  const { netApy } = computeNetApy(vault.apy, vault.fee, rewardsApy, "earn");
   const totalDeposits = Number(formatUnits(vault.totalSupply, 18)) * tokenPriceInUSD;
   const liquidity = Number(formatUnits(vault.totalSupply - vault.totalAssets, 18)) * tokenPriceInUSD;
   const yourDeposit = Number(formatUnits(userShare, 18)) * tokenPriceInUSD;
@@ -93,8 +97,8 @@ function StatsGrid({
         </p>
       </div>
       <div>
-        <p className="text-muted-foreground mb-1 text-sm">APY</p>
-        <p className="text-2xl font-semibold">{formatReadableDecimalNumber({ value: apy, maxDecimals: 2 })} %</p>
+        <p className="text-muted-foreground mb-1 text-sm">Net APY</p>
+        <p className="text-2xl font-semibold">{formatApy(netApy)}</p>
       </div>
       <div>
         <p className="text-muted-foreground mb-1 text-sm">Your Deposit</p>
@@ -125,12 +129,10 @@ function VaultDetailsGrid({
   vault,
   asset,
   curators,
-  chain,
 }: {
   vault: AccrualVault;
   asset: Token;
-  curators: DisplayableCurators[];
-  chain: Chain;
+  curators: DisplayableCurators;
 }) {
   const fee = Number(formatUnits(vault.fee, 18)) * 100;
 
@@ -141,7 +143,7 @@ function VaultDetailsGrid({
         <div className="flex items-center gap-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600">
             <span className="text-xs text-white">
-              <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6" />
+              <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6 rounded-full" />
             </span>
           </div>
           <span className="font-semibold">{asset.symbol}</span>
@@ -154,8 +156,13 @@ function VaultDetailsGrid({
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
         <p className="text-muted-foreground mb-2 text-sm">Curators</p>
         <div className="flex items-center gap-2">
-          {curators && curators.length > 0 ? (
-            curators.map((curator) => <span>{curator.name.name}</span>)
+          {Object.keys(curators).length > 0 ? (
+            Object.values(curators).map((curator) => (
+              <div className="flex items-center gap-1">
+                <img src={curator.imageSrc ?? ""} alt={curator.name} className="h-6 w-6 rounded-full" />
+                {curator.name}
+              </div>
+            ))
           ) : (
             <p>No curators</p>
           )}
@@ -166,45 +173,127 @@ function VaultDetailsGrid({
 }
 
 // Market Allocation Section Component
-function MarketAllocationSection() {
+function MarketAllocationSection({
+  allocations,
+  chainId,
+  asset,
+  tokenPriceInUSD,
+}: {
+  allocations: Map<string, VaultMarketAllocation> | undefined;
+  chainId: number;
+  asset: Token;
+  tokenPriceInUSD: number;
+}) {
+  // Collect all unique token addresses from allocations
+  const allocationTokenAddresses = useMemo(() => {
+    const tokenAddressesSet = new Set<Address>();
+    allocations?.forEach((allocation) => {
+      tokenAddressesSet.add(allocation.position.market.params.collateralToken);
+      tokenAddressesSet.add(allocation.position.market.params.loanToken);
+    });
+    return Array.from(tokenAddressesSet);
+  }, [allocations]);
+
+  // Fetch all allocation tokens at once
+  const allocationTokens = useTokens(allocationTokenAddresses, chainId);
+
+  const formattedAllocations = useMemo(() => {
+    return [...(allocations?.values() ?? [])].map((allocation) => {
+      const collateralToken = allocation.position.market.params.collateralToken;
+      const loanToken = allocation.position.market.params.loanToken;
+      const collateralAsset = allocationTokens.get(collateralToken);
+      const loanAsset = allocationTokens.get(loanToken);
+      const supply =
+        Number(formatUnits(allocation.position.market.totalSupplyAssets, asset?.decimals ?? 18)) *
+        (tokenPriceInUSD ?? 0);
+      // TODO: fix cap
+      const cap = Number(formatUnits(allocation.config.cap, asset?.decimals ?? 18)) * (tokenPriceInUSD ?? 0);
+
+      return {
+        collateralAsset,
+        loanAsset,
+        supply,
+        cap,
+      };
+    });
+  }, [allocations, allocationTokens, asset?.decimals, tokenPriceInUSD]);
+
   return (
     <div className="mb-8 rounded-lg border bg-white py-6 shadow-sm">
       <div className="mb-6 flex items-center justify-start gap-2 px-5">
         <h2 className="text-xl font-semibold">Market Allocation</h2>
-        <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">99 Allocation</span>
+        <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
+          {allocations?.size ?? 0} Allocation{(allocations?.size ?? 0) !== 1 ? "s" : ""}
+        </span>
       </div>
 
       <div>
-        <div className="border-border bg-muted/50 grid grid-cols-4 gap-4 border-b p-4 text-sm font-medium">
-          <div className="flex items-center gap-1">
-            Vault Name <ChevronDown className="h-4 w-4" />
-          </div>
-          <div className="flex items-center gap-1">
-            APY <ChevronDown className="h-4 w-4" />
+        <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 text-sm font-medium">
+          <div className="col-span-2 flex items-center gap-1">
+            Market <ChevronDown className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-1">
             Allocation (%) <ChevronDown className="h-4 w-4" />
+          </div>
+          <div className="flex items-center gap-1">
+            Allocation ($) <ChevronDown className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-1">
             Supply Cap <ChevronDown className="h-4 w-4" />
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600">
-                <span className="text-xs font-bold text-white">W</span>
+        <div>
+          {formattedAllocations.length > 0 ? (
+            formattedAllocations.map((allocation, index) => (
+              <div key={index} className="grid grid-cols-5 items-center gap-4 border-b p-4">
+                <div className="col-span-2 flex items-center gap-2">
+                  {allocation.collateralAsset && (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full">
+                      <img
+                        src={allocation.collateralAsset.imageSrc}
+                        alt={allocation.collateralAsset.symbol}
+                        className="h-6 w-6 rounded-full"
+                      />
+                    </div>
+                  )}
+                  {allocation.loanAsset && (
+                    <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full">
+                      <img
+                        src={allocation.loanAsset.imageSrc}
+                        alt={allocation.loanAsset.symbol}
+                        className="-ml-3 h-6 w-6 rounded-full"
+                      />
+                    </div>
+                  )}
+                  <span className="font-medium">
+                    {allocation.collateralAsset?.symbol} / {allocation.loanAsset?.symbol}
+                  </span>
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {formatReadableDecimalNumber({
+                    value: (allocation.supply / formattedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100,
+                    maxDecimals: 2,
+                    letters: true,
+                  })}
+                  %
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  $
+                  {formatReadableDecimalNumber({
+                    value: allocation.supply,
+                    maxDecimals: 2,
+                    letters: true,
+                  })}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  ${formatReadableDecimalNumber({ value: allocation.cap, maxDecimals: 2, letters: true })}
+                </div>
               </div>
-              <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full bg-purple-600">
-                <span className="text-xs font-bold text-white">$</span>
-              </div>
-              <span className="font-medium">wETH / USDp</span>
-            </div>
-            <div className="bg-secondary/10 text-secondary mt-1 w-fit rounded-full px-2 py-1 text-xs">99.99%</div>
-            <div className="text-muted-foreground text-sm">99%</div>
-            <div className="text-muted-foreground text-sm">$99.99M</div>
-          </div>
+            ))
+          ) : (
+            <p>No allocations</p>
+          )}
         </div>
       </div>
     </div>
@@ -218,12 +307,14 @@ function InteractionSection({
   userShare,
   vault,
   tokenPriceInUSD,
+  rewards,
 }: {
   vaultAddress: Address;
   asset: Token;
   userShare: bigint;
   vault: AccrualVault;
   tokenPriceInUSD: number;
+  rewards: MerklOpportunities;
 }) {
   const { address: userAddress } = useAccount();
   const [selectedTab, setSelectedTab] = useState(Actions.Deposit);
@@ -252,10 +343,13 @@ function InteractionSection({
     selectedTab === Actions.Deposit ? userShare + (inputValue ?? 0n) : userShare - (inputValue ?? 0n),
     asset.decimals ?? 18,
   );
-  const apy = formatUnits(vault.netApy, 18);
-  const monthlyEarnings = parseFloat(userBalance) * parseFloat(apy);
+  const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
+  const { netApy } = computeNetApy(vault.apy, vault.fee, rewardsApy, "earn");
+  const apyToComputeEarnings = formatUnits(netApy, 18);
+  const monthlyEarnings = parseFloat(userBalance) * parseFloat(apyToComputeEarnings);
   const yearlyEarnings = monthlyEarnings * 12;
-  const projectedMonthlyEarningsUSD = parseFloat(projectedBalance) * parseFloat(apy) * (tokenPriceInUSD ?? 0);
+  const projectedMonthlyEarningsUSD =
+    parseFloat(projectedBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
   const projectedYearlyEarningsUSD = projectedMonthlyEarningsUSD * 12;
   const isMaxed = inputValue === maxes?.[0];
 
@@ -442,43 +536,30 @@ function InteractionSection({
 
 // Main Vault SubPage Component
 export function VaultSubPage() {
+  const { address: userAddress } = useAccount();
   const { address: vaultAddress } = useParams();
   const { chain } = useOutletContext() as { chain?: Chain };
   const chainId = chain?.id ?? 1;
-  const { vaultsData, vaults, markets, userShares, marketVaults } = useVaults({ chainId, staleTime: STALE_TIME });
+  const { vaultsData, vaults, topCurators, userShares } = useVaults({ chainId, staleTime: STALE_TIME });
   const currentVaultData = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
   const currentVault = vaults?.find((vault) => vault.address === vaultAddress);
   const tokenAddress = currentVaultData?.vault.asset;
   const userShare = userShares[vaultAddress as Address] ?? 0n;
-  const currentMarket = markets[currentVaultData?.vault.withdrawQueue[0] as Address];
-  const curators = marketVaults.get(currentVaultData?.vault.vault as Address)?.map((vault) => vault.curators);
-
-  const { data: symbol } = useReadContract({
-    address: tokenAddress as Address,
-    abi: erc20Abi,
-    functionName: "symbol",
-  });
-  const { data: tokenDecimals } = useReadContract({
-    address: tokenAddress as Address,
-    abi: erc20Abi,
-    functionName: "decimals",
-  });
-  const asset = {
-    address: tokenAddress as Address,
-    symbol: symbol as string,
-    decimals: tokenDecimals as number,
-    imageSrc: getTokenURI({ symbol: symbol as string, address: tokenAddress as Address, chainId }),
-  };
+  const curators = currentVault ? getDisplayableCurators(currentVault, topCurators) : {};
+  const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
+  const rewards = lendingRewards.get(currentVaultData?.vault.vault as Address) ?? [];
+  const allocations = currentVault?.allocations;
+  const asset = useToken(tokenAddress as Address, chainId);
 
   const [tokenPriceInUSD, setTokenPriceInUSD] = useState<number | undefined>(undefined);
-  const { data: usdPrices } = useTokenPrices(chainId, [asset.address]);
+  const { data: usdPrices } = useTokenPrices(chainId, asset?.address ? [asset.address] : []);
 
   useEffect(() => {
-    if (!usdPrices || !asset.address) return;
+    if (!usdPrices || !asset?.address) return;
     setTokenPriceInUSD(usdPrices[asset.address.toLowerCase() as Address]?.price_usd);
-  }, [usdPrices, asset.address]);
+  }, [usdPrices, asset?.address]);
 
-  if (!currentVault || !currentVaultData) return null;
+  if (!currentVault || !currentVaultData || !asset) return null;
 
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
@@ -491,15 +572,16 @@ export function VaultSubPage() {
               vault={currentVault as AccrualVault}
               userShare={userShare}
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
+              rewards={rewards}
             />
             <AboutSection />
-            <VaultDetailsGrid
-              vault={currentVault as AccrualVault}
+            <VaultDetailsGrid vault={currentVault as AccrualVault} asset={asset} curators={curators} />
+            <MarketAllocationSection
+              allocations={allocations}
+              chainId={chainId}
               asset={asset}
-              curators={curators as DisplayableCurators[]}
-              chain={chain as Chain}
+              tokenPriceInUSD={tokenPriceInUSD ?? 0}
             />
-            <MarketAllocationSection />
           </div>
 
           <div className="w-4/12">
@@ -508,6 +590,7 @@ export function VaultSubPage() {
               asset={asset}
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
               userShare={userShare}
+              rewards={rewards}
               vault={currentVault as AccrualVault}
             />
           </div>

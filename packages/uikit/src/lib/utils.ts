@@ -170,3 +170,9 @@ export function max(a: bigint, b: bigint) {
 export function min(a: bigint, b: bigint) {
   return a < b ? a : b;
 }
+
+export const computeNetApy = (nativeApy: bigint, fee: bigint, rewardsApy: bigint, mode: "earn" | "owe") => {
+  const feeApy = (fee * nativeApy) / 10n ** 18n;
+  const netApy = mode === "earn" ? nativeApy - feeApy + rewardsApy : nativeApy + feeApy - rewardsApy;
+  return { netApy, feeApy };
+};

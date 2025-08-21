@@ -12,6 +12,7 @@ const CHAIN_ID_TO_NETWORK_MAP: Record<number, string> = {
   81457: "blast",
   2741: "abstract",
   98866: "plume-network",
+  1135: "lisk",
 };
 
 async function getTokenPriceByChainAndContract(
@@ -32,8 +33,6 @@ async function getTokenPriceByChainAndContract(
         { headers: baseHeaders },
       );
 
-      console.log(response);
-
       if (!response.ok) {
         throw new Error(`GeckoTerminal error: ${response.status} ${response.statusText}`);
       }
@@ -42,8 +41,6 @@ async function getTokenPriceByChainAndContract(
       const normalizedAddress = address.toLowerCase();
       const priceStr = data?.data?.attributes?.token_prices?.[normalizedAddress];
       const mcStr = data?.data?.attributes?.market_cap_usd?.[normalizedAddress];
-
-      console.log(priceStr, mcStr);
 
       return {
         address: normalizedAddress,

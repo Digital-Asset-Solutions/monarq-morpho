@@ -61,9 +61,8 @@ export default function Page() {
   );
 
   useEffect(() => {
-    const title = selectedSubPage === "vault" 
-      ? "Vault" 
-      : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
+    const title =
+      selectedSubPage === "vault" ? "Vault" : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
     document.title = `${APP_DETAILS.name} | ${title}`;
   }, [selectedSubPage]);
 

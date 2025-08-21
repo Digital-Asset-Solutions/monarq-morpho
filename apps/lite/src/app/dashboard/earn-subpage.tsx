@@ -20,7 +20,7 @@ export function EarnSubPage() {
 
   const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
 
-  const { vaults, topCurators, userShares, refetchBalanceOf } = useVaults({
+  const { vaults, topCurators, userShares } = useVaults({
     chainId,
     staleTime: STALE_TIME,
     userAddress,
@@ -91,7 +91,6 @@ export function EarnSubPage() {
             depositsMode="userAssets"
             tokens={tokens}
             lendingRewards={lendingRewards}
-            refetchPositions={refetchBalanceOf}
           />
         </div>
       )}
@@ -107,7 +106,6 @@ export function EarnSubPage() {
             depositsMode="totalAssets"
             tokens={tokens}
             lendingRewards={lendingRewards}
-            refetchPositions={refetchBalanceOf}
           />
         </div>
       </div>
