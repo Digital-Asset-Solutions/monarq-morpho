@@ -1,6 +1,7 @@
 import { formatUnits } from "viem";
 
 import { Input } from "@/components/shadcn/input";
+import { formatReadableDecimalNumber } from "@/lib/utils";
 
 function validateTokenAmountInput(input: string, maxDecimals: number): string | null {
   if (input === "" || input === "0") {
@@ -20,19 +21,22 @@ export function TokenAmountInput({
   decimals,
   value,
   maxValue,
+  usdPrice,
   onChange,
 }: {
   decimals?: number;
   value: string;
   maxValue?: bigint;
+  usdPrice?: number;
   onChange: (value: string) => void;
 }) {
   const textMaxValue = maxValue !== undefined && decimals !== undefined ? formatUnits(maxValue, decimals) : undefined;
+  const usdValue = usdPrice && parseFloat(value) > 0 ? parseFloat(value) * usdPrice : undefined;
 
   return (
     <div>
       <Input
-        className="caret-morpho-brand p-0 font-mono text-2xl font-bold"
+        className="caret-morpho-brand mb-2 border-none p-0 font-mono text-2xl font-bold shadow-none"
         type="text"
         placeholder="0"
         value={value}
@@ -42,14 +46,22 @@ export function TokenAmountInput({
         }}
         disabled={decimals === undefined}
       />
-      {textMaxValue && (
-        <p className="text-primary-foreground text-right text-xs font-light">
-          {textMaxValue}{" "}
-          <span className="text-morpho-brand cursor-pointer" onClick={() => onChange(textMaxValue)}>
-            MAX
-          </span>{" "}
-        </p>
-      )}
+      <div className="flex h-5 items-center justify-between">
+        {usdPrice && usdValue && (
+          <p className="text-primary-foreground text-right text-xs font-light">
+            ${formatReadableDecimalNumber({ value: usdValue, maxDecimals: 2, letters: false })}
+          </p>
+        )}
+
+        {textMaxValue && (
+          <p className="text-primary-foreground ml-auto text-right text-xs font-light">
+            {textMaxValue}{" "}
+            <span className="text-morpho-brand cursor-pointer" onClick={() => onChange(textMaxValue)}>
+              MAX
+            </span>{" "}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

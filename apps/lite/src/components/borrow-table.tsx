@@ -1,7 +1,6 @@
 import { AccrualPosition, Market, type MarketId } from "@morpho-org/blue-sdk";
 import { AvatarStack } from "@morpho-org/uikit/components/avatar-stack";
 import { Avatar, AvatarFallback, AvatarImage } from "@morpho-org/uikit/components/shadcn/avatar";
-import { Sheet, SheetTrigger } from "@morpho-org/uikit/components/shadcn/sheet";
 import {
   Table,
   TableBody,
@@ -11,13 +10,19 @@ import {
   TableRow,
 } from "@morpho-org/uikit/components/shadcn/table";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@morpho-org/uikit/components/shadcn/tooltip";
-import { formatLtv, formatBalanceWithSymbol, Token, abbreviateAddress } from "@morpho-org/uikit/lib/utils";
+import {
+  formatLtv,
+  formatBalanceWithSymbol,
+  Token,
+  abbreviateAddress,
+  getChainSlug,
+} from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 import { CheckCheck, Copy, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { type Chain, type Hex, type Address } from "viem";
 
-import { BorrowSheetContent } from "@/components/borrow-sheet-content";
 import { BorrowTableHeader, type BorrowTableFilters } from "@/components/filters/borrow-table-header";
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
 import { ApyTableCell } from "@/components/table-cells/apy-table-cell";
@@ -225,6 +230,7 @@ function IdTableCell({ marketId }: { marketId: MarketId }) {
           <button
             className="ml-[-8px] flex w-min cursor-pointer items-center gap-2 rounded-sm p-2"
             onClick={(event) => {
+              event.preventDefault();
               event.stopPropagation();
               void navigator.clipboard.writeText(marketId);
 
@@ -260,7 +266,6 @@ export function BorrowTable({
   tokens,
   marketVaults,
   borrowingRewards,
-  refetchPositions,
 }: {
   chain: Chain | undefined;
   markets: Market[];
@@ -364,15 +369,11 @@ export function BorrowTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedMarkets.map((market) => (
-            <Sheet
-              key={market.id}
-              onOpenChange={(isOpen) => {
-                // Refetch positions on sidesheet close, since user may have sent txns to modify one
-                if (!isOpen) void refetchPositions();
-              }}
-            >
-              <SheetTrigger asChild>
+          {sortedMarkets.map((market) => {
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+
+            return (
+              <Link key={market.id} to={`/${chainSlug}/market/${market.id}`} className="contents">
                 <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
@@ -410,10 +411,9 @@ export function BorrowTable({
                     <IdTableCell marketId={market.id} />
                   </TableCell>
                 </TableRow>
-              </SheetTrigger>
-              <BorrowSheetContent marketId={market.id} marketParams={market.params} imarket={market} tokens={tokens} />
-            </Sheet>
-          ))}
+              </Link>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -426,7 +426,6 @@ export function BorrowPositionTable({
   tokens,
   positions,
   borrowingRewards,
-  refetchPositions,
   displayHeader = true,
 }: {
   chain: Chain | undefined;
@@ -510,49 +509,37 @@ export function BorrowPositionTable({
               loanText = formatBalanceWithSymbol(position.borrowAssets, loanToken.decimals, loanToken.symbol, 5);
             }
 
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+
             return (
-              <Sheet
-                key={market.id}
-                onOpenChange={(isOpen) => {
-                  // Refetch positions on sidesheet close, since user may have sent txns to modify one
-                  if (!isOpen) void refetchPositions();
-                }}
-              >
-                <SheetTrigger asChild>
-                  <TableRow className="hover:bg-primary border-border border-b">
-                    <TableCell className="py-3">
-                      <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
-                    </TableCell>
-                    <TableCell>
-                      <TokenTableCell {...loanToken} symbol={loanText} chain={chain} />
-                    </TableCell>
-                    <TableCell>
-                      <ApyTableCell
-                        nativeApy={market.borrowApy}
-                        rewards={borrowingRewards.get(market.id) ?? []}
-                        mode="owe"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <HealthTableCell
-                        market={market}
-                        position={position}
-                        loanToken={loanToken}
-                        collateralToken={collateralToken}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <IdTableCell marketId={market.id} />
-                    </TableCell>
-                  </TableRow>
-                </SheetTrigger>
-                <BorrowSheetContent
-                  marketId={market.id}
-                  marketParams={market.params}
-                  imarket={market}
-                  tokens={tokens}
-                />
-              </Sheet>
+              <Link key={market.id} to={`/${chainSlug}/market/${market.id}`} className="contents">
+                <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
+                  <TableCell className="py-3">
+                    <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
+                  </TableCell>
+                  <TableCell>
+                    <TokenTableCell {...loanToken} symbol={loanText} chain={chain} />
+                  </TableCell>
+                  <TableCell>
+                    <ApyTableCell
+                      nativeApy={market.borrowApy}
+                      rewards={borrowingRewards.get(market.id) ?? []}
+                      mode="owe"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <HealthTableCell
+                      market={market}
+                      position={position}
+                      loanToken={loanToken}
+                      collateralToken={collateralToken}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IdTableCell marketId={market.id} />
+                  </TableCell>
+                </TableRow>
+              </Link>
             );
           })}
         </TableBody>

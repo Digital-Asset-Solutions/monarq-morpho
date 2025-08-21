@@ -16,6 +16,7 @@ enum SubPage {
   Earn = "earn",
   Borrow = "borrow",
   Dashboard = "dashboard",
+  Vault = "vault",
 }
 
 function ConnectWalletButton() {
@@ -60,7 +61,13 @@ export default function Page() {
   );
 
   useEffect(() => {
-    document.title = `${APP_DETAILS.name} | ${selectedSubPage.charAt(0).toUpperCase()}${selectedSubPage.slice(1)}`;
+    const title =
+      selectedSubPage === "vault"
+        ? "Vault"
+        : selectedSubPage === "market"
+          ? "Market"
+          : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
+    document.title = `${APP_DETAILS.name} | ${title}`;
   }, [selectedSubPage]);
 
   return (
