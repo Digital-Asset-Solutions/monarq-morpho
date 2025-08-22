@@ -1,6 +1,8 @@
 import { type Deployments } from "@morpho-org/uikit/lib/deployments";
 import { ReactNode } from "react";
-import { optimism, plumeMainnet, polygon, worldchain } from "wagmi/chains";
+import { lisk } from "wagmi/chains";
+// LITE APP: Other chains not needed - commented for rollback
+// import { lisk, optimism, plumeMainnet, polygon, worldchain } from "wagmi/chains"; // Original imports
 
 export const APP_DETAILS = {
   // NOTE: Should always match the title in `index.html` (won't break anything, but should be correct)
@@ -14,7 +16,9 @@ export const WORDMARK = "/lazarus.svg"; // Replace with "/your-wordmark.svg" to 
 
 export const MIN_TIMELOCK = 3 * 24 * 60 * 60; // For filtering vaults
 
-export const DEFAULT_CHAIN = plumeMainnet;
+// LITE APP: Dedicated to Lisk chain only
+export const DEFAULT_CHAIN = lisk;
+// export const DEFAULT_CHAIN = plumeMainnet; // Original default chain - commented for rollback
 
 export const TRANSACTION_DATA_SUFFIX = "0x117E"; // (L I T E)
 
@@ -23,6 +27,19 @@ export const RISKS_DOCUMENTATION = "https://docs.morpho.org/overview/resources/r
 export const ADDRESSES_DOCUMENTATION = "https://docs.morpho.org/overview/resources/addresses/";
 export const SHARED_LIQUIDITY_DOCUMENTATION = "https://docs.morpho.org/overview/concepts/public-allocator/";
 
+// LITE APP: Simplified banners - only Lisk supported
+export const BANNERS: Record<keyof Deployments, { color: string; text: ReactNode }> = {
+  [lisk.id]: {
+    color: "bg-gradient-to-r from-blue-600 to-purple-600",
+    text: (
+      <span className="grow py-2 text-center text-white">
+        Welcome to Morpho Lite - Dedicated to Lisk Ecosystem 🚀
+      </span>
+    ),
+  },
+};
+
+/* ORIGINAL BANNERS CONFIG - commented for rollback
 export const BANNERS: Record<keyof Deployments, { color: string; text: ReactNode }> = {
   [plumeMainnet.id]: {
     color: "bg-[rgb(255,61,0)]",
@@ -82,3 +99,4 @@ export const BANNERS: Record<keyof Deployments, { color: string; text: ReactNode
     ),
   },
 };
+*/
