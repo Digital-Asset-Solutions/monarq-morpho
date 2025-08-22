@@ -16,7 +16,8 @@ import {
   Token,
   formatLtv,
   abbreviateAddress,
-  getChainSlug,
+  // LITE APP: getChainSlug not needed - commented for rollback
+  // getChainSlug, // Original import
 } from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 // @ts-expect-error: this package lacks types
@@ -358,10 +359,13 @@ export function EarnTable({
             );
             const rewards = rewardsVault.concat(rewardsMarkets);
 
-            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+            // LITE APP: No chain slug needed - dedicated to Lisk
+            // const chainSlug = chain ? getChainSlug(chain) : "ethereum"; // Original chain slug - commented for rollback
 
             return (
-              <Link key={row.vault.address} to={`/${chainSlug}/vault/${row.vault.address}`} className="contents">
+              // LITE APP: Simplified URL without chain parameter
+              // ORIGINAL: to={`/${chainSlug}/vault/${row.vault.address}`} - commented for rollback
+              <Link key={row.vault.address} to={`/vault/${row.vault.address}`} className="contents">
                 <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <VaultTableCell

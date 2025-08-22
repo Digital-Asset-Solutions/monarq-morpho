@@ -7,7 +7,8 @@ import {
   formatApy,
   formatReadableDecimalNumber,
   Token,
-  getChainSlug,
+  // LITE APP: getChainSlug not needed - commented for rollback
+  // getChainSlug, // Original import
 } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -39,19 +40,23 @@ const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light
 
 // Header Section Component
 function VaultHeader() {
-  const { chain } = useOutletContext() as { chain?: Chain };
-  const chainSlug = chain?.name.toLowerCase() || "ethereum";
+  // LITE APP: chain context not needed for header - commented for rollback
+  // const { chain } = useOutletContext() as { chain?: Chain }; // Original chain context
+  // LITE APP: No chain slug needed - dedicated to Lisk
+  // const chainSlug = chain?.name.toLowerCase() || "ethereum"; // Original chain slug - commented for rollback
 
   return (
     <div className="flex items-center justify-between pb-5">
       <div className="flex items-center gap-4">
+        {/* LITE APP: Simplified URL without chain parameter */}
         <Link
-          to={`/${chainSlug}/earn`}
+          to="/earn"
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
+        {/* ORIGINAL: to={`/${chainSlug}/earn`} - commented for rollback */}
       </div>
     </div>
   );
@@ -185,7 +190,8 @@ function MarketAllocationSection({
   chainId,
   asset,
   tokenPriceInUSD,
-  chain,
+  // LITE APP: chain parameter not used - commented for rollback
+  // chain, // Original parameter
 }: {
   allocations: Map<string, VaultMarketAllocation> | undefined;
   chainId: number;
@@ -227,7 +233,8 @@ function MarketAllocationSection({
     });
   }, [allocations, allocationTokens, asset?.decimals, tokenPriceInUSD]);
 
-  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+  // LITE APP: chainSlug not needed - dedicated to Lisk
+  // const chainSlug = chain ? getChainSlug(chain) : "ethereum"; // Original chain slug - commented for rollback
 
   // Sort state
   const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
@@ -296,7 +303,9 @@ function MarketAllocationSection({
         <div>
           {sortedAllocations.length > 0 ? (
             sortedAllocations.map((allocation, index) => (
-              <Link key={index} to={`/${chainSlug}/market/${allocation.marketId}`} className="contents">
+              // LITE APP: Simplified URL without chain parameter
+              // ORIGINAL: to={`/${chainSlug}/market/${allocation.marketId}`} - commented for rollback
+              <Link key={index} to={`/market/${allocation.marketId}`} className="contents">
                 <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
                   <div className="col-span-2 flex items-center gap-2">
                     {allocation.collateralAsset && (
@@ -638,12 +647,13 @@ export function VaultSubPage() {
                 rewards={rewards}
               />
             </div>
+            {/* LITE APP: chain parameter removed */}
             <MarketAllocationSection
               allocations={allocations}
               chainId={chainId}
               asset={asset}
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
-              chain={chain}
+              // chain={chain} // Original parameter - commented for rollback
             />
           </div>
 

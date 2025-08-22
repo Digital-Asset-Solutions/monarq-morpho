@@ -36,7 +36,8 @@ function Banner(chainId: number | undefined) {
 export function AppSidebar({ chainId }: { chainId?: number }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const chainSlug = location.pathname.split("/")[1]; // Extract chain from current path
+  // LITE APP: No chain slug needed - dedicated to Lisk
+  // const chainSlug = location.pathname.split("/")[1]; // Original chain extraction - commented for rollback
 
   return (
     <Sidebar>
@@ -59,18 +60,22 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               isActive={currentPath.includes("/dashboard")}
               className="transition-all duration-200"
             >
-              <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5">
+              {/* LITE APP: Simplified URLs without chain parameter */}
+              <Link to="/dashboard" className="px-3 py-5">
                 <Home className="text-secondary h-7 w-7" />
                 <span>Dashboard</span>
               </Link>
+              {/* ORIGINAL: <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5"> */}
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={currentPath.includes("/earn")} className="transition-all duration-200">
-              <Link to={`/${chainSlug}/earn`} className="px-3 py-5">
+              {/* LITE APP: Simplified URLs without chain parameter */}
+              <Link to="/earn" className="px-3 py-5">
                 <CircleDollarSign className="text-secondary h-7 w-7" />
                 <span>Earn</span>
               </Link>
+              {/* ORIGINAL: <Link to={`/${chainSlug}/earn`} className="px-3 py-5"> */}
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -79,10 +84,12 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               isActive={currentPath.includes("/borrow")}
               className="transition-all duration-200"
             >
-              <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
+              {/* LITE APP: Simplified URLs without chain parameter */}
+              <Link to="/borrow" className="px-3 py-5">
                 <LucideHandCoins className="text-secondary h-7 w-7" />
                 <span>Borrow</span>
               </Link>
+              {/* ORIGINAL: <Link to={`/${chainSlug}/borrow`} className="px-3 py-5"> */}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
