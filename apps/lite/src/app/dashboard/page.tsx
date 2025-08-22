@@ -1,11 +1,16 @@
 import { Button } from "@morpho-org/uikit/components/shadcn/button";
 import { SidebarInset, SidebarTrigger } from "@morpho-org/uikit/components/shadcn/sidebar";
-import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
-import { CORE_DEPLOYMENTS } from "@morpho-org/uikit/lib/deployments";
+// LITE APP: WalletMenu and CORE_DEPLOYMENTS not needed - chain selection disabled
+// import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu"; // Original import - commented for rollback
+// import { CORE_DEPLOYMENTS } from "@morpho-org/uikit/lib/deployments"; // Original import - commented for rollback
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
-import { useCallback, useEffect, useMemo } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { useEffect, useMemo } from "react";
+// LITE APP: useCallback not needed - commented for rollback
+// import { useCallback, useEffect, useMemo } from "react"; // Original imports
+// LITE APP: useParams and useNavigate not needed for dedicated Lisk app
+import { Outlet, useLocation } from "react-router";
+// import { Outlet, useLocation, useNavigate, useParams } from "react-router"; // Original imports - commented for rollback
 import { useChains } from "wagmi";
 
 import { AppSidebar, AppSidebarLayout } from "@/components/header";
@@ -36,19 +41,34 @@ function ConnectWalletButton() {
 }
 
 export default function Page() {
-  const navigate = useNavigate();
-  const { chain: selectedChainSlug } = useParams();
+  // LITE APP: navigate not needed for dedicated Lisk app
+  // const navigate = useNavigate(); // Original navigate - commented for rollback
+  // LITE APP: No chain parameter needed - dedicated to Lisk
+  // const { chain: selectedChainSlug } = useParams(); // Original chain param - commented for rollback
 
   const location = useLocation();
   const locationSegments = location.pathname.toLowerCase().split("/").slice(1);
-  const selectedSubPage = locationSegments.at(1) as SubPage;
+  const selectedSubPage = locationSegments.at(0) as SubPage; // Changed from .at(1) since no chain segment
 
   const chains = useChains();
+  // LITE APP: Always use Lisk chain
   const chain = useMemo(
-    () => chains.find((chain) => getChainSlug(chain) === selectedChainSlug),
-    [chains, selectedChainSlug],
+    () => chains.find((chain) => getChainSlug(chain) === "lisk"),
+    [chains],
   );
+  
+  // LITE APP: Variables not needed for dedicated Lisk app - commented for rollback
+  // const selectedChainSlug = "lisk"; // Not used since WalletMenu is disabled
+  // const setSelectedChainSlug = useCallback( // Not used since WalletMenu is disabled
+  //   (value: string) => {
+  //     // Chain selection disabled in lite app dedicated to Lisk
+  //     console.warn("Chain selection disabled - app is dedicated to Lisk");
+  //   },
+  //   [selectedSubPage],
+  // );
 
+  /* ORIGINAL CHAIN SELECTION LOGIC - commented for rollback
+  const selectedChainSlug = "lisk";
   const setSelectedChainSlug = useCallback(
     (value: string) => {
       void navigate(`../${value}/${selectedSubPage}`, { replace: true, relative: "path" });
@@ -60,6 +80,7 @@ export default function Page() {
     },
     [navigate, selectedSubPage],
   );
+  */
 
   useEffect(() => {
     const title =
@@ -79,12 +100,16 @@ export default function Page() {
           <SidebarTrigger className="-ml-1" />
           <div className="mr-2 flex items-center gap-2">
             <RewardsButton chainId={chain?.id} />
+            {/* LITE APP: Chain selection disabled - only Lisk supported */}
+            <ConnectWalletButton />
+            {/* ORIGINAL WALLET MENU WITH CHAIN SELECTION - commented for rollback
             <WalletMenu
               selectedChainSlug={selectedChainSlug!}
               setSelectedChainSlug={setSelectedChainSlug}
               connectWalletButton={<ConnectWalletButton />}
               coreDeployments={CORE_DEPLOYMENTS}
             />
+            */}
           </div>
         </header>
         <main className="flex-1 overflow-auto bg-[#F5F5F5]">

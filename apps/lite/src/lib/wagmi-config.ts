@@ -1,7 +1,12 @@
-import * as customChains from "@morpho-org/uikit/lib/chains";
+// LITE APP: Only essential imports for Lisk
+// import * as customChains from "@morpho-org/uikit/lib/chains"; // Original import - commented for rollback
 import { getDefaultConfig as createConnectKitConfigParams } from "connectkit";
 import type { Chain, HttpTransportConfig } from "viem";
 import { CreateConnectorFn, createConfig as createWagmiConfig, fallback, http, type Transport } from "wagmi";
+import { lisk } from "wagmi/chains";
+
+/* ORIGINAL IMPORTS - commented for rollback
+import * as customChains from "@morpho-org/uikit/lib/chains";
 import {
   arbitrum,
   base,
@@ -20,6 +25,7 @@ import {
   unichain,
   worldchain,
 } from "wagmi/chains";
+*/
 
 import { APP_DETAILS } from "@/lib/constants";
 
@@ -38,6 +44,8 @@ function createFallbackTransport(rpcs: ({ url: string } & HttpTransportConfig)[]
   );
 }
 
+// LITE APP: Alchemy HTTP function not needed for Lisk - commented for rollback
+/* ORIGINAL ALCHEMY HTTP FUNCTION - commented for rollback
 function createAlchemyHttp(slug: string): ({ url: string } & HttpTransportConfig)[] {
   const alchemyApiKey = import.meta.env.VITE_ALCHEMY_API_KEY as string;
   return [
@@ -54,7 +62,14 @@ function createAlchemyHttp(slug: string): ({ url: string } & HttpTransportConfig
     },
   ];
 }
+*/
 
+// LITE APP: Only Lisk chain supported
+const chains = [
+  lisk,
+] as const;
+
+/* ORIGINAL CHAINS CONFIG - commented for rollback
 const chains = [
   // full support
   mainnet,
@@ -77,7 +92,14 @@ const chains = [
   customChains.tac,
   worldchain,
 ] as const;
+*/
 
+// LITE APP: Only Lisk transport needed
+const transports: { [K in (typeof chains)[number]["id"]]: Transport } & { [k: number]: Transport } = {
+  [lisk.id]: createFallbackTransport(lisk.rpcUrls.default.http.map((url) => ({ url, batch: false }))),
+};
+
+/* ORIGINAL TRANSPORTS CONFIG - commented for rollback
 const transports: { [K in (typeof chains)[number]["id"]]: Transport } & { [k: number]: Transport } = {
   [mainnet.id]: createFallbackTransport([
     ...createAlchemyHttp("eth-mainnet"),
@@ -149,6 +171,7 @@ const transports: { [K in (typeof chains)[number]["id"]]: Transport } & { [k: nu
     { url: "https://rpc.tac.build/", batch: { batchSize: 10 } },
   ]),
 };
+*/
 
 export function createConfig(args: {
   chains?: readonly [Chain, ...Chain[]];

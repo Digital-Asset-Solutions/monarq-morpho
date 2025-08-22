@@ -35,19 +35,22 @@ const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light
 
 // Header Section Component
 function MarketHeader() {
-  const { chain } = useOutletContext() as { chain?: Chain };
-  const chainSlug = chain?.name.toLowerCase() || "ethereum";
+  // LITE APP: chain context not needed for header - commented for rollback
+  // const { chain } = useOutletContext() as { chain?: Chain }; // Original chain context
+  // const chainSlug = chain?.name.toLowerCase() || "ethereum"; // Original chain slug - commented for rollback
 
   return (
     <div className="flex items-center justify-between pb-5">
       <div className="flex items-center gap-4">
+        {/* LITE APP: Simplified URL without chain parameter */}
         <Link
-          to={`/${chainSlug}/borrow`}
+          to="/borrow"
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
+        {/* ORIGINAL: to={`/${chainSlug}/borrow`} - commented for rollback */}
       </div>
     </div>
   );
@@ -177,13 +180,16 @@ function MarketDetailsGrid({
 function VaultsSection({
   marketVaults,
   loanToken,
-  chain,
+  // LITE APP: chain parameter not used - commented for rollback
+  // chain, // Original parameter
 }: {
   marketVaults: { name: string; address: Address; totalAssets: bigint; curators: DisplayableCurators }[];
   loanToken: Token;
-  chain?: Chain;
+  // LITE APP: chain parameter not used - commented for rollback
+  // chain?: Chain; // Original parameter
 }) {
-  const chainSlug = chain?.name.toLowerCase() || "ethereum";
+  // LITE APP: chainSlug not needed - dedicated to Lisk
+  // const chainSlug = chain?.name.toLowerCase() || "ethereum"; // Original chain slug - commented for rollback
 
   // Sort state
   const [sort, setSort] = useState<{ column: string | null; direction: SortDirection }>({
@@ -261,7 +267,9 @@ function VaultsSection({
                 const allocationPercentage = totalSupply > 0 ? (vaultSupply / totalSupply) * 100 : 0;
 
                 return (
-                  <Link key={index} to={`/${chainSlug}/vault/${vault.address}`} className="contents">
+                  // LITE APP: Simplified URL without chain parameter
+                  // ORIGINAL: to={`/${chainSlug}/vault/${vault.address}`} - commented for rollback
+                  <Link key={index} to={`/vault/${vault.address}`} className="contents">
                     <div className="hover:bg-primary grid cursor-pointer grid-cols-4 items-center gap-4 border-b p-4">
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full">
@@ -806,7 +814,9 @@ export function MarketSubPage() {
                 loanTokenPriceInUSD={loanTokenPriceInUSD ?? 0}
               />
             </div>
-            <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} />
+            {/* LITE APP: chain parameter removed */}
+            <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} />
+            {/* ORIGINAL: <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} /> */}
           </div>
 
           <div className="hidden w-4/12 lg:block">
