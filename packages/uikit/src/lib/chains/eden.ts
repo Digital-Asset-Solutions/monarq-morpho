@@ -6,7 +6,7 @@ export const eden = /*#__PURE__*/ defineChain({
   nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
   rpcUrls: {
     default: {
-      http: ["http://localhost:3001/rpc"],
+      http: ["https://eden-rpc-proxy.up.railway.app/rpc"],
     },
   },
   blockExplorers: {
