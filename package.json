@@ -12,6 +12,9 @@
     "fallback-app:dev": "pnpm uikit:build && pnpm --parallel --filter '@morpho-org/fallback-app'... dev",
     "lite-app:build": "pnpm uikit:build && pnpm --filter '@morpho-org/lite-app' build-this",
     "lite-app:dev": "pnpm uikit:build && pnpm --parallel --filter '@morpho-org/lite-app'... dev",
+    "rpc-proxy:dev": "pnpm --filter '@morpho-org/rpc-proxy' dev",
+    "rpc-proxy:build": "pnpm --filter '@morpho-org/rpc-proxy' build",
+    "dev:all": "pnpm --parallel rpc-proxy:dev lite-app:dev",
     "lint": "pnpm --filter './**' lint",
     "prepare": "husky"
   },

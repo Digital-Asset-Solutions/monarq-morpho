@@ -2,6 +2,8 @@ import { getTokenSymbolURI as getTokenSymbolURIFromCdn } from "@morpho-org/uikit
 import { Address } from "viem";
 import { plumeMainnet } from "viem/chains";
 
+import { edenTokenList } from "./eden-tokens";
+
 type TokenList = {
   name: string;
   logoURI: string;
@@ -13,7 +15,10 @@ type TokenList = {
 
 export function getTokenURI(
   token: { symbol?: string; address: Address; chainId?: number },
-  tokenLists: { [chainId: number]: TokenList[] } = { [plumeMainnet.id]: [plumeTokenList] },
+  tokenLists: { [chainId: number]: TokenList[] } = {
+    [plumeMainnet.id]: [plumeTokenList],
+    [3735928814]: [edenTokenList],
+  },
 ) {
   if (token.chainId !== undefined) {
     const match = tokenLists[token.chainId]

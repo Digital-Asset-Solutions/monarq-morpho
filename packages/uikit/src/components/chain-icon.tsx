@@ -25,6 +25,7 @@ import ArbitrumSvg from "@/assets/chains/arb.svg?react";
 import BaseChainSvg from "@/assets/chains/base.svg?react";
 import CampSvg from "@/assets/chains/camp.svg?react";
 import CornSvg from "@/assets/chains/corn.svg?react";
+import EdenSvg from "@/assets/chains/eden.svg?react";
 import EthereumChainSvg from "@/assets/chains/ethereum.svg?react";
 import FlameSvg from "@/assets/chains/flame.svg?react";
 import FraxtalSvg from "@/assets/chains/fraxtal.svg?react";
@@ -55,6 +56,8 @@ export function ChainIcon({ id }: { id: number | undefined }): JSX.Element {
       return <CampSvg />;
     case corn.id:
       return <CornSvg />;
+    case customChains.eden.id:
+      return <EdenSvg />;
     case flame.id:
       return <FlameSvg />;
     case fraxtal.id:

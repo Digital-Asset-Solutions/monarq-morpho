@@ -19,6 +19,7 @@ import { useReadContract, useReadContracts } from "wagmi";
 
 import { useMarkets } from "@/hooks/use-markets";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
+import { VAULT_BLACKLIST, MARKET_BLACKLIST } from "@/lib/constants";
 import { type DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -95,8 +96,24 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
 
   const vaults = useMemo(() => {
     const vaults: AccrualVault[] = [];
+    const blacklistedVaults = chainId ? (VAULT_BLACKLIST[chainId] ?? []) : [];
+
+    // Debug logging
+    // console.log(`[useVaults] Chain ID: ${chainId}`);
+    // console.log(`[useVaults] Blacklisted vaults for chain ${chainId}:`, blacklistedVaults);
+    // console.log(`[useVaults] Total vaultsData: ${vaultsData?.length ?? 0}`);
+
     vaultsData?.forEach((vaultData) => {
       const { vault: address, supplyQueue, withdrawQueue, ...iVault } = vaultData.vault;
+
+      // console.log(`[useVaults] Processing vault: ${vaultData.vault.name} (${address})`);
+
+      // Check if vault is blacklisted
+      if (blacklistedVaults.map((addr) => addr.toLowerCase()).includes(address.toLowerCase())) {
+        // console.log(`[useVaults] Skipping blacklisted vault '${vaultData.vault.name}' (${address})`);
+        return;
+      }
+
       // NOTE: pending values are placeholders
       const vault = new Vault({
         ...iVault,
@@ -144,7 +161,7 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
     });
     vaults.sort((a, b) => (a.netApy > b.netApy ? -1 : 1));
     return vaults;
-  }, [vaultsData, markets]);
+  }, [vaultsData, markets, chainId]);
 
   // For borrow page: extract market IDs for enabled allocations with supply shares
   const borrowMarketIds = useMemo(
@@ -163,20 +180,33 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
   const borrowMarkets = useMarkets({ chainId, marketIds: borrowMarketIds, staleTime, fetchPrices });
 
   const borrowMarketsArray = useMemo(() => {
-    const marketsArr = Object.values(borrowMarkets).filter(
-      (market) =>
+    const blacklistedMarkets = chainId ? (MARKET_BLACKLIST[chainId] ?? []) : [];
+
+    // Debug logging
+    // console.log(`[useVaults] Chain ID: ${chainId}`);
+    // console.log(`[useVaults] Blacklisted markets for chain ${chainId}:`, blacklistedMarkets);
+
+    const marketsArr = Object.values(borrowMarkets).filter((market) => {
+      // Check if market is blacklisted
+      if (blacklistedMarkets.map((addr) => addr.toLowerCase()).includes(market.id.toLowerCase())) {
+        // console.log(`[useVaults] Skipping blacklisted market '${market.id}'`);
+        return false;
+      }
+
+      return (
         market.totalSupplyAssets > 0n &&
         ![market.params.collateralToken, market.params.loanToken, market.params.irm, market.params.oracle].includes(
           zeroAddress,
-        ),
-    );
+        )
+      );
+    });
     marketsArr.sort((a, b) => {
       const primary = a.params.loanToken.localeCompare(b.params.loanToken);
       const secondary = a.liquidity > b.liquidity ? -1 : 1;
       return primary === 0 ? secondary : primary;
     });
     return marketsArr;
-  }, [borrowMarkets]);
+  }, [borrowMarkets, chainId]);
 
   const marketVaults = useMemo(() => {
     const map = new Map<

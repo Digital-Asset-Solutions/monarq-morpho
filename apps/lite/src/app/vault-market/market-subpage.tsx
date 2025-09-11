@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/comp
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
 import { getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
-import { formatReadableDecimalNumber, Token, formatBalanceWithSymbol } from "@morpho-org/uikit/lib/utils";
+import { formatReadableDecimalNumber, getChainSlug, Token, formatBalanceWithSymbol } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -16,7 +16,7 @@ import { SortableTableHead, type SortDirection, useSorting, createSortHandler } 
 import { useMarkets } from "@/hooks/use-markets";
 import { useToken } from "@/hooks/use-token";
 import { useVaults } from "@/hooks/use-vaults";
-import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
+import { TRANSACTION_DATA_SUFFIX, MARKET_BLACKLIST } from "@/lib/constants";
 import { DisplayableCurators } from "@/lib/curators";
 import { useTokenPrices } from "@/lib/prices";
 
@@ -180,13 +180,11 @@ function MarketDetailsGrid({
 function VaultsSection({
   marketVaults,
   loanToken,
-  // LITE APP: chain parameter not used - commented for rollback
-  // chain, // Original parameter
+  chain,
 }: {
   marketVaults: { name: string; address: Address; totalAssets: bigint; curators: DisplayableCurators }[];
   loanToken: Token;
-  // LITE APP: chain parameter not used - commented for rollback
-  // chain?: Chain; // Original parameter
+  chain?: Chain;
 }) {
   // LITE APP: chainSlug not needed - dedicated to Lisk
   // const chainSlug = chain?.name.toLowerCase() || "ethereum"; // Original chain slug - commented for rollback
@@ -265,11 +263,11 @@ function VaultsSection({
               return sortedVaults.map((vault, index) => {
                 const vaultSupply = Number(formatUnits(vault.totalAssets, loanToken.decimals ?? 18));
                 const allocationPercentage = totalSupply > 0 ? (vaultSupply / totalSupply) * 100 : 0;
+                const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
                 return (
                   // LITE APP: Simplified URL without chain parameter
-                  // ORIGINAL: to={`/${chainSlug}/vault/${vault.address}`} - commented for rollback
-                  <Link key={index} to={`/vault/${vault.address}`} className="contents">
+                  <Link key={index} to={`/${chainSlug}/vault/${vault.address}`} className="contents">
                     <div className="hover:bg-primary grid cursor-pointer grid-cols-4 items-center gap-4 border-b p-4">
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full">
@@ -747,6 +745,11 @@ export function MarketSubPage() {
     Object.values(allMarkets).find((market) => market.id === marketId);
   const currentMarketVaults = marketVaults.get(marketId as Address) ?? [];
 
+  // Check if market is blacklisted
+  const blacklistedMarkets = chainId ? (MARKET_BLACKLIST[chainId] ?? []) : [];
+  const isMarketBlacklisted =
+    marketId && blacklistedMarkets.map((addr) => addr.toLowerCase()).includes(marketId.toLowerCase());
+
   // Get user position for this market
   const morpho = useMemo(() => getContractDeploymentInfo(chainId, "Morpho"), [chainId]);
   const { data: positionRaw } = useReadContract({
@@ -786,6 +789,12 @@ export function MarketSubPage() {
     }
   }, [usdPrices, collateralToken?.address, loanToken?.address]);
 
+  // Return null if market is blacklisted
+  if (isMarketBlacklisted) {
+    // console.log(`[MarketSubPage] Market ${marketId} is blacklisted`);
+    return null;
+  }
+
   if (!currentMarket || !collateralToken || !loanToken) return null;
 
   return (
@@ -814,9 +823,7 @@ export function MarketSubPage() {
                 loanTokenPriceInUSD={loanTokenPriceInUSD ?? 0}
               />
             </div>
-            {/* LITE APP: chain parameter removed */}
-            <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} />
-            {/* ORIGINAL: <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} /> */}
+            <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} />
           </div>
 
           <div className="hidden w-4/12 lg:block">

@@ -117,6 +117,20 @@ export function BorrowSubPage() {
 
   const userMarkets = marketsArr.filter((market) => positions?.get(market.id)?.collateral ?? 0n > 0n);
 
+  // Show message if no markets are available
+  if (marketsArr.length === 0) {
+    return (
+      <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
+        <div className="flex h-96 items-center justify-center">
+          <div className="text-center">
+            <h2 className="mb-2 text-xl font-semibold">No borrow markets available</h2>
+            <p className="text-muted-foreground">There are currently no borrow markets available on this chain</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
       {userMarkets.length > 0 && (

@@ -6,9 +6,8 @@ import {
   computeNetApy,
   formatApy,
   formatReadableDecimalNumber,
+  getChainSlug,
   Token,
-  // LITE APP: getChainSlug not needed - commented for rollback
-  // getChainSlug, // Original import
 } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -190,8 +189,7 @@ function MarketAllocationSection({
   chainId,
   asset,
   tokenPriceInUSD,
-  // LITE APP: chain parameter not used - commented for rollback
-  // chain, // Original parameter
+  chain,
 }: {
   allocations: Map<string, VaultMarketAllocation> | undefined;
   chainId: number;
@@ -302,56 +300,57 @@ function MarketAllocationSection({
 
         <div>
           {sortedAllocations.length > 0 ? (
-            sortedAllocations.map((allocation, index) => (
-              // LITE APP: Simplified URL without chain parameter
-              // ORIGINAL: to={`/${chainSlug}/market/${allocation.marketId}`} - commented for rollback
-              <Link key={index} to={`/market/${allocation.marketId}`} className="contents">
-                <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
-                  <div className="col-span-2 flex items-center gap-2">
-                    {allocation.collateralAsset && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full">
-                        <img
-                          src={allocation.collateralAsset.imageSrc}
-                          alt={allocation.collateralAsset.symbol}
-                          className="h-6 w-6 rounded-full"
-                        />
-                      </div>
-                    )}
-                    {allocation.loanAsset && (
-                      <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full">
-                        <img
-                          src={allocation.loanAsset.imageSrc}
-                          alt={allocation.loanAsset.symbol}
-                          className="-ml-3 h-6 w-6 rounded-full"
-                        />
-                      </div>
-                    )}
-                    <span className="font-medium">
-                      {allocation.collateralAsset?.symbol} / {allocation.loanAsset?.symbol}
-                    </span>
+            sortedAllocations.map((allocation, index) => {
+              const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+              return (
+                <Link key={index} to={`/${chainSlug}/market/${allocation.marketId}`} className="contents">
+                  <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
+                    <div className="col-span-2 flex items-center gap-2">
+                      {allocation.collateralAsset && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full">
+                          <img
+                            src={allocation.collateralAsset.imageSrc}
+                            alt={allocation.collateralAsset.symbol}
+                            className="h-6 w-6 rounded-full"
+                          />
+                        </div>
+                      )}
+                      {allocation.loanAsset && (
+                        <div className="-ml-2 flex h-6 w-6 items-center justify-center rounded-full">
+                          <img
+                            src={allocation.loanAsset.imageSrc}
+                            alt={allocation.loanAsset.symbol}
+                            className="-ml-3 h-6 w-6 rounded-full"
+                          />
+                        </div>
+                      )}
+                      <span className="font-medium">
+                        {allocation.collateralAsset?.symbol} / {allocation.loanAsset?.symbol}
+                      </span>
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      {formatReadableDecimalNumber({
+                        value: (allocation.supply / sortedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100,
+                        maxDecimals: 2,
+                        letters: true,
+                      })}
+                      %
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      $
+                      {formatReadableDecimalNumber({
+                        value: allocation.supply,
+                        maxDecimals: 2,
+                        letters: true,
+                      })}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      ${formatReadableDecimalNumber({ value: allocation.cap, maxDecimals: 2, letters: true })}
+                    </div>
                   </div>
-                  <div className="text-muted-foreground text-sm">
-                    {formatReadableDecimalNumber({
-                      value: (allocation.supply / sortedAllocations.reduce((acc, x) => acc + x.supply, 0)) * 100,
-                      maxDecimals: 2,
-                      letters: true,
-                    })}
-                    %
-                  </div>
-                  <div className="text-muted-foreground text-sm">
-                    $
-                    {formatReadableDecimalNumber({
-                      value: allocation.supply,
-                      maxDecimals: 2,
-                      letters: true,
-                    })}
-                  </div>
-                  <div className="text-muted-foreground text-sm">
-                    ${formatReadableDecimalNumber({ value: allocation.cap, maxDecimals: 2, letters: true })}
-                  </div>
-                </div>
-              </Link>
-            ))
+                </Link>
+              );
+            })
           ) : (
             <p className="text-muted-foreground p-4 text-center">No allocations</p>
           )}
@@ -647,13 +646,12 @@ export function VaultSubPage() {
                 rewards={rewards}
               />
             </div>
-            {/* LITE APP: chain parameter removed */}
             <MarketAllocationSection
               allocations={allocations}
               chainId={chainId}
               asset={asset}
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
-              // chain={chain} // Original parameter - commented for rollback
+              chain={chain}
             />
           </div>
 

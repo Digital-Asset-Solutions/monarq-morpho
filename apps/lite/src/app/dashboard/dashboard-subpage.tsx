@@ -26,6 +26,7 @@ import { useMarkets } from "@/hooks/use-markets";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
+import { VAULT_BLACKLIST } from "@/lib/constants";
 import { getDisplayableCurators } from "@/lib/curators";
 import { getTokenURI } from "@/lib/tokens";
 
@@ -108,8 +109,17 @@ export function DashboardSubPage() {
   const markets = useMarkets({ chainId, marketIds, staleTime: STALE_TIME });
   const vaults = useMemo(() => {
     const vaults: AccrualVault[] = [];
+    const blacklistedVaults = chainId ? (VAULT_BLACKLIST[chainId] ?? []) : [];
+
     vaultsData?.forEach((vaultData) => {
       const { vault: address, supplyQueue, withdrawQueue, ...iVault } = vaultData.vault;
+
+      // Check if vault is blacklisted
+      if (blacklistedVaults.map((addr) => addr.toLowerCase()).includes(address.toLowerCase())) {
+        // console.log(`Skipping blacklisted vault '${vaultData.vault.name}' (${address})`);
+        return;
+      }
+
       // NOTE: pending values are placeholders
       const vault = new Vault({
         ...iVault,
@@ -157,7 +167,7 @@ export function DashboardSubPage() {
     });
     vaults.sort((a, b) => (a.netApy > b.netApy ? -1 : 1));
     return vaults;
-  }, [vaultsData, markets]);
+  }, [vaultsData, markets, chainId]);
 
   // MARK: Fetch metadata for every ERC20 asset (including market tokens)
   const tokenAddresses = useMemo(() => {

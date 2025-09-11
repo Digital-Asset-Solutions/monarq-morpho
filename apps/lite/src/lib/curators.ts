@@ -57,6 +57,12 @@ export const MANUALLY_WHITELISTED_CURATORS: FragmentOf<typeof CuratorFragment>[]
     name: "Solera",
     url: "https://solera.market",
   },
+  {
+    addresses: [{ address: "0x7554ee28c15e61D9B3CEbcC9F5CAcE7742830B05", chainId: customChains.eden.id }],
+    image: "https://via.placeholder.com/32x32/4ade80/ffffff?text=E",
+    name: "Eden Testnet",
+    url: "https://explorer-edennet-1-testnet.binary.builders:8443/",
+  },
 ];
 
 export const ADDITIONAL_OFFCHAIN_CURATORS: Record<Address, DisplayableCurators> = {
