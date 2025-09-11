@@ -35,22 +35,19 @@ const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light
 
 // Header Section Component
 function MarketHeader() {
-  // LITE APP: chain context not needed for header - commented for rollback
-  // const { chain } = useOutletContext() as { chain?: Chain }; // Original chain context
-  // const chainSlug = chain?.name.toLowerCase() || "ethereum"; // Original chain slug - commented for rollback
+  const { chain } = useOutletContext() as { chain?: Chain };
+  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
   return (
     <div className="flex items-center justify-between pb-5">
       <div className="flex items-center gap-4">
-        {/* LITE APP: Simplified URL without chain parameter */}
         <Link
-          to="/borrow"
+          to={`/${chainSlug}/borrow`}
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
-        {/* ORIGINAL: to={`/${chainSlug}/borrow`} - commented for rollback */}
       </div>
     </div>
   );

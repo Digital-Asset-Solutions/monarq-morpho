@@ -266,14 +266,14 @@ export function BorrowTable({
   tokens,
   marketVaults,
   borrowingRewards,
-  refetchPositions,
+  // refetchPositions,
 }: {
   chain: Chain | undefined;
   markets: Market[];
   tokens: Map<Address, Token>;
   marketVaults: Map<Hex, { name: string; address: Address; totalAssets: bigint; curators: DisplayableCurators }[]>;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
-  refetchPositions: () => void;
+  // refetchPositions: () => void;
 }) {
   // Filter state
   const [filters, setFilters] = useState<BorrowTableFilters>({
@@ -427,7 +427,7 @@ export function BorrowPositionTable({
   tokens,
   positions,
   borrowingRewards,
-  refetchPositions,
+  // refetchPositions,
   displayHeader = true,
 }: {
   chain: Chain | undefined;
@@ -435,7 +435,7 @@ export function BorrowPositionTable({
   tokens: Map<Address, Token>;
   positions: Map<Hex, AccrualPosition> | undefined;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
-  refetchPositions: () => void;
+  // refetchPositions: () => void;
   displayHeader?: boolean;
 }) {
   // Filter state
