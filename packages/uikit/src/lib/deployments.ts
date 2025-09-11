@@ -126,6 +126,10 @@ export const DEPLOYMENTS: Deployments = {
     Morpho: { address: "0x918B9F2E4B44E20c6423105BB6cCEB71473aD35c", fromBlock: 853025n },
     MetaMorphoV1_1Factory: { address: "0xcDA78f4979d17Ec93052A84A12001fe0088AD734", fromBlock: 978654n },
   },
+  [customChains.eden.id]: {
+    Morpho: { address: "0xe3F8380851ee3A0BBcedDD0bCDe92d423812C1Cd", fromBlock: 172586n },
+    MetaMorphoV1_1Factory: { address: "0xb007ca4AD41874640F9458bF3B5e427c31Be7766", fromBlock: 173434n },
+  },
 };
 
 export const CORE_DEPLOYMENTS = new Set<keyof Deployments>([
@@ -134,6 +138,7 @@ export const CORE_DEPLOYMENTS = new Set<keyof Deployments>([
   polygon.id,
   unichain.id,
   customChains.katana.id,
+  customChains.eden.id,
 ]);
 
 export function getContractDeploymentInfo(chainId: number, name: OptionalContracts): DeploymentDetails | undefined;

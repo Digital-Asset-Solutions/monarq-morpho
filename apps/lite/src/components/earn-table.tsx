@@ -13,11 +13,10 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@morph
 import { useModifierKey } from "@morpho-org/uikit/hooks/use-modifier-key";
 import {
   formatBalanceWithSymbol,
+  getChainSlug,
   Token,
   formatLtv,
   abbreviateAddress,
-  // LITE APP: getChainSlug not needed - commented for rollback
-  // getChainSlug, // Original import
 } from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 // @ts-expect-error: this package lacks types
@@ -359,13 +358,11 @@ export function EarnTable({
             );
             const rewards = rewardsVault.concat(rewardsMarkets);
 
-            // LITE APP: No chain slug needed - dedicated to Lisk
-            // const chainSlug = chain ? getChainSlug(chain) : "ethereum"; // Original chain slug - commented for rollback
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
             return (
               // LITE APP: Simplified URL without chain parameter
-              // ORIGINAL: to={`/${chainSlug}/vault/${row.vault.address}`} - commented for rollback
-              <Link key={row.vault.address} to={`/vault/${row.vault.address}`} className="contents">
+              <Link key={row.vault.address} to={`/${chainSlug}/vault/${row.vault.address}`} className="contents">
                 <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <VaultTableCell

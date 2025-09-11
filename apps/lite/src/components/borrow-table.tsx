@@ -15,8 +15,7 @@ import {
   formatBalanceWithSymbol,
   Token,
   abbreviateAddress,
-  // LITE APP: getChainSlug not needed - commented for rollback
-  // getChainSlug, // Original import
+  getChainSlug,
 } from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
 import { CheckCheck, Copy, ExternalLink, Info } from "lucide-react";
@@ -267,13 +266,14 @@ export function BorrowTable({
   tokens,
   marketVaults,
   borrowingRewards,
+  // refetchPositions,
 }: {
   chain: Chain | undefined;
   markets: Market[];
   tokens: Map<Address, Token>;
   marketVaults: Map<Hex, { name: string; address: Address; totalAssets: bigint; curators: DisplayableCurators }[]>;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
-  refetchPositions: () => void;
+  // refetchPositions: () => void;
 }) {
   // Filter state
   const [filters, setFilters] = useState<BorrowTableFilters>({
@@ -371,13 +371,10 @@ export function BorrowTable({
         </TableHeader>
         <TableBody>
           {sortedMarkets.map((market) => {
-            // LITE APP: No chain slug needed - dedicated to Lisk
-            // const chainSlug = chain ? getChainSlug(chain) : "ethereum"; // Original chain slug - commented for rollback
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
             return (
-              // LITE APP: Simplified URL without chain parameter
-              // ORIGINAL: to={`/${chainSlug}/market/${market.id}`} - commented for rollback
-              <Link key={market.id} to={`/market/${market.id}`} className="contents">
+              <Link key={market.id} to={`/${chainSlug}/market/${market.id}`} className="contents">
                 <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <TokenTableCell {...tokens.get(market.params.collateralToken)!} chain={chain} />
@@ -430,6 +427,7 @@ export function BorrowPositionTable({
   tokens,
   positions,
   borrowingRewards,
+  // refetchPositions,
   displayHeader = true,
 }: {
   chain: Chain | undefined;
@@ -437,7 +435,7 @@ export function BorrowPositionTable({
   tokens: Map<Address, Token>;
   positions: Map<Hex, AccrualPosition> | undefined;
   borrowingRewards: ReturnType<typeof useMerklOpportunities>;
-  refetchPositions: () => void;
+  // refetchPositions: () => void;
   displayHeader?: boolean;
 }) {
   // Filter state
@@ -513,13 +511,10 @@ export function BorrowPositionTable({
               loanText = formatBalanceWithSymbol(position.borrowAssets, loanToken.decimals, loanToken.symbol, 5);
             }
 
-            // LITE APP: No chain slug needed - dedicated to Lisk
-            // const chainSlug = chain ? getChainSlug(chain) : "ethereum"; // Original chain slug - commented for rollback
+            const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
             return (
-              // LITE APP: Simplified URL without chain parameter
-              // ORIGINAL: to={`/${chainSlug}/market/${market.id}`} - commented for rollback
-              <Link key={market.id} to={`/market/${market.id}`} className="contents">
+              <Link key={market.id} to={`/${chainSlug}/market/${market.id}`} className="contents">
                 <TableRow className="hover:bg-primary border-border cursor-pointer border-b">
                   <TableCell className="py-3">
                     <TokenTableCell {...collateralToken} symbol={collateralText} chain={chain} />
