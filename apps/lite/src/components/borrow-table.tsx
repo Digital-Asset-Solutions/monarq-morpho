@@ -1,4 +1,4 @@
-import { AccrualPosition, Market, type MarketId } from "@morpho-org/blue-sdk";
+import { AccrualPosition, Market } from "@morpho-org/blue-sdk";
 import { AvatarStack } from "@morpho-org/uikit/components/avatar-stack";
 import { Avatar, AvatarFallback, AvatarImage } from "@morpho-org/uikit/components/shadcn/avatar";
 import {
