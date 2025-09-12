@@ -38,7 +38,7 @@ export const MARKET_BLACKLIST: Record<number, string[]> = {
 console.log(`[Constants] Eden chain ID: ${customChains.eden.id}`);
 
 // LITE APP: Dedicated to Lisk and Eden chains
-export const DEFAULT_CHAIN = lisk;
+export const DEFAULT_CHAIN = customChains.eden;
 // export const DEFAULT_CHAIN = plumeMainnet; // Original default chain - commented for rollback
 
 export const TRANSACTION_DATA_SUFFIX = "0x117E"; // (L I T E)

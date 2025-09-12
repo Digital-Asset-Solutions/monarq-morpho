@@ -13,6 +13,7 @@ import Page from "@/app/dashboard/page.tsx";
 import { MarketSubPage } from "@/app/vault-market/market-subpage";
 import { VaultSubPage } from "@/app/vault-market/vault-subpage";
 import App from "@/App.tsx";
+import { ConditionalRedirect } from "@/components/conditional-redirect";
 import { DEFAULT_CHAIN } from "@/lib/constants";
 
 createRoot(document.getElementById("root")!).render(
@@ -29,7 +30,7 @@ createRoot(document.getElementById("root")!).render(
         >
           <Route index element={<Navigate replace to={getChainSlug(DEFAULT_CHAIN)} />} />
           <Route path=":chain/">
-            <Route index element={<Navigate replace to="dashboard" />} />
+            <Route index element={<ConditionalRedirect />} />
             <Route element={<Page />}>
               <Route path="dashboard" element={<DashboardSubPage />} />
               <Route path="earn" element={<EarnSubPage />} />

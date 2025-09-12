@@ -11,15 +11,15 @@ export const eden = /*#__PURE__*/ defineChain({
   },
   blockExplorers: {
     default: {
-      name: "Somnia Testnet Explorer",
+      name: "Eden Testnet Explorer",
       url: "https://explorer-edennet-1-testnet.binary.builders:8443/",
       apiUrl: "https://explorer-edennet-1-testnet.binary.builders:8443/api",
     },
   },
   contracts: {
     multicall3: {
-      address: "0xf2C48f93aEc0EccE78BC30CD148E60C00c0Bcc4C",
-      blockCreated: 38765,
+      address: "0xCB7D6ac7F5E59b7EcbfF221858BA9A59ca66CC5b",
+      blockCreated: 538237,
     },
   },
   testnet: true,
