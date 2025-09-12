@@ -18,7 +18,7 @@ import {
   getChainSlug,
 } from "@morpho-org/uikit/lib/utils";
 import { blo } from "blo";
-import { CheckCheck, Copy, ExternalLink, Info } from "lucide-react";
+import { ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { type Chain, type Hex, type Address } from "viem";
@@ -220,45 +220,6 @@ function VaultsTableCell({
   );
 }
 
-function IdTableCell({ marketId }: { marketId: MarketId }) {
-  const [recentlyCopiedText, setRecentlyCopiedText] = useState("");
-
-  return (
-    <TooltipProvider>
-      <Tooltip delayDuration={1000}>
-        <TooltipTrigger asChild>
-          <button
-            className="ml-[-8px] flex w-min cursor-pointer items-center gap-2 rounded-sm p-2"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              void navigator.clipboard.writeText(marketId);
-
-              setRecentlyCopiedText(marketId);
-              setTimeout(() => setRecentlyCopiedText(""), 500);
-            }}
-          >
-            {marketId === recentlyCopiedText ? (
-              <CheckCheck className="size-4 text-green-400" />
-            ) : (
-              <Copy className="size-4" />
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent
-          className="text-primary-foreground rounded-3xl p-4 shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="wrap-anywhere flex max-w-[200px] items-center gap-1">
-            <p>
-              Market ID: <code>{marketId}</code>
-            </p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 export function BorrowTable({
   chain,
@@ -366,7 +327,6 @@ export function BorrowTable({
               Rate
             </SortableTableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Vault Listing</TableHead>
-            <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -407,9 +367,6 @@ export function BorrowTable({
                       vaults={marketVaults.get(market.params.id) ?? []}
                       chain={chain}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <IdTableCell marketId={market.id} />
                   </TableCell>
                 </TableRow>
               </Link>
@@ -487,7 +444,6 @@ export function BorrowPositionTable({
               Rate
             </SortableTableHead>
             <TableHead className="text-primary-foreground text-xs font-light">Health</TableHead>
-            <TableHead className="text-primary-foreground text-xs font-light">ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -535,9 +491,6 @@ export function BorrowPositionTable({
                       loanToken={loanToken}
                       collateralToken={collateralToken}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <IdTableCell marketId={market.id} />
                   </TableCell>
                 </TableRow>
               </Link>
