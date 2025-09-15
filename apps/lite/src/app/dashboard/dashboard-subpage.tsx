@@ -14,9 +14,9 @@ import useContractEvents from "@morpho-org/uikit/hooks/use-contract-events/use-c
 import { readAccrualVaults, readAccrualVaultsStateOverride } from "@morpho-org/uikit/lens/read-vaults";
 import { tac } from "@morpho-org/uikit/lib/chains/tac";
 import { CORE_DEPLOYMENTS, getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
-import { Token } from "@morpho-org/uikit/lib/utils";
+import { Token, getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { useEffect, useMemo } from "react";
-import { useOutletContext } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import { Address, Chain, erc20Abi, zeroAddress, type Hex } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
@@ -41,6 +41,7 @@ const STALE_TIME = 5 * 60 * 1000;
 export function DashboardSubPage() {
   const { status, address: userAddress } = useAccount();
   const { chain } = useOutletContext() as { chain?: Chain };
+  const navigate = useNavigate();
   const chainId = chain?.id;
 
   const [morpho, factory, factoryV1_1] = useMemo(
@@ -309,6 +310,14 @@ export function DashboardSubPage() {
       return position && (position.borrowShares > 0n || position.collateral > 0n);
     });
   }, [markets, positionsMap]);
+
+  // Redirect to earn page if user has no positions
+  useEffect(() => {
+    if (status === "connected" && userAddress && userRows.length === 0 && userBorrowMarkets.length === 0) {
+      const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+      navigate(`/${chainSlug}/earn`, { replace: true });
+    }
+  }, [status, userAddress, userRows.length, userBorrowMarkets.length, chain, navigate]);
 
   if (status === "reconnecting") return undefined;
 
