@@ -220,7 +220,6 @@ function VaultsTableCell({
   );
 }
 
-
 export function BorrowTable({
   chain,
   markets,

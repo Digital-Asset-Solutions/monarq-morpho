@@ -14,9 +14,10 @@ import useContractEvents from "@morpho-org/uikit/hooks/use-contract-events/use-c
 import { readAccrualVaults, readAccrualVaultsStateOverride } from "@morpho-org/uikit/lens/read-vaults";
 import { tac } from "@morpho-org/uikit/lib/chains/tac";
 import { CORE_DEPLOYMENTS, getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
-import { Token } from "@morpho-org/uikit/lib/utils";
+import { getChainSlug, Token } from "@morpho-org/uikit/lib/utils";
+import { Search } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { useOutletContext } from "react-router";
+import { Link, useOutletContext } from "react-router";
 import { Address, Chain, erc20Abi, zeroAddress, type Hex } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
@@ -310,19 +311,39 @@ export function DashboardSubPage() {
     });
   }, [markets, positionsMap]);
 
+  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+
+  // Empty state component for when no positions are found
+  const EmptyState = ({ type }: { type: "earn" | "borrow" }) => (
+    <div className="flex h-64 items-center justify-center">
+      <div className="text-center">
+        <Search className="mx-auto mb-4 h-16 w-16 rounded-full bg-purple-100 p-4 text-purple-500" />
+        <h3 className="mb-2 text-lg font-semibold text-gray-800">No positions found</h3>
+        <p className="mb-4 text-sm text-gray-500">You don't have any {type} position.</p>
+        <Link
+          to={type === "earn" ? `/${chainSlug}/earn` : `/${chainSlug}/borrow`}
+          className="mx-auto flex w-fit items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600"
+        >
+          <Search className="h-4 w-4" />
+          {type === "earn" ? "Earn More" : "Borrow More"}
+        </Link>
+      </div>
+    </div>
+  );
+
   if (status === "reconnecting") return undefined;
 
   return (
     <div className="w-[calc(100vw-35px)] space-y-6 md:w-full">
       {/* Show earn table if user has earn positions */}
-      {userRows.length > 0 && (
-        <div className="rounded-xl bg-white">
-          <div className="flex items-center justify-start gap-2 p-4">
-            <h2 className="text-xl">Earn</h2>
-            <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-              {userRows.length} positions / 100$
-            </span>
-          </div>
+      <div className="rounded-xl bg-white">
+        <div className="flex items-center justify-start gap-2 p-4">
+          <h2 className="text-xl">Earn</h2>
+          <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
+            {userRows.length} positions / $0.00
+          </span>
+        </div>
+        {userRows.length > 0 ? (
           <EarnTable
             chain={chain}
             rows={userRows}
@@ -331,18 +352,20 @@ export function DashboardSubPage() {
             lendingRewards={lendingRewards}
             displayHeader={false}
           />
-        </div>
-      )}
+        ) : (
+          <EmptyState type="earn" />
+        )}
+      </div>
 
       {/* Show borrow table if user has borrow positions */}
-      {userBorrowMarkets.length > 0 && (
-        <div className="rounded-xl bg-white">
-          <div className="flex items-center justify-start gap-2 p-4">
-            <h2 className="text-xl">Borrow</h2>
-            <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-              {userBorrowMarkets.length} positions / 100$
-            </span>
-          </div>
+      <div className="rounded-xl bg-white">
+        <div className="flex items-center justify-start gap-2 p-4">
+          <h2 className="text-xl">Borrow</h2>
+          <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
+            {userBorrowMarkets.length} positions / $0.00
+          </span>
+        </div>
+        {userBorrowMarkets.length > 0 ? (
           <BorrowPositionTable
             chain={chain}
             markets={userBorrowMarkets}
@@ -352,18 +375,10 @@ export function DashboardSubPage() {
             refetchPositions={refetchPositions}
             displayHeader={false}
           />
-        </div>
-      )}
-
-      {/* Show message if no positions */}
-      {userRows.length === 0 && userBorrowMarkets.length === 0 && (
-        <div className="flex h-96 items-center justify-center">
-          <div className="text-center">
-            <h2 className="mb-2 text-xl font-semibold">No positions found</h2>
-            <p className="text-muted-foreground">You don't have any earn or borrow positions yet</p>
-          </div>
-        </div>
-      )}
+        ) : (
+          <EmptyState type="borrow" />
+        )}
+      </div>
     </div>
   );
 }
