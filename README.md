@@ -8,7 +8,7 @@ they share.
 To get started:
  
 ```shell
-git clone https://github.com/morpho-org/morpho-lite-apps.git
+git clone https://github.com/morpho-org/morpho-lite-apps.git 
 cd morpho-lite-apps
 # Install packages
 pnpm install
