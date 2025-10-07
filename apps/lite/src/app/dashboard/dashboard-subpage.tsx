@@ -317,12 +317,12 @@ export function DashboardSubPage() {
   const EmptyState = ({ type }: { type: "earn" | "borrow" }) => (
     <div className="flex h-64 items-center justify-center">
       <div className="text-center">
-        <Search className="mx-auto mb-4 h-16 w-16 rounded-full bg-purple-100 p-4 text-purple-500" />
+        <Search className="bg-morpho-brand/10 text-morpho-brand mx-auto mb-4 h-16 w-16 rounded-full p-4" />
         <h3 className="mb-2 text-lg font-semibold text-gray-800">No positions found</h3>
         <p className="mb-4 text-sm text-gray-500">You don't have any {type} position.</p>
         <Link
           to={type === "earn" ? `/${chainSlug}/earn` : `/${chainSlug}/borrow`}
-          className="mx-auto flex w-fit items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600"
+          className="bg-morpho-brand hover:bg-morpho-brand/90 mx-auto flex w-fit items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
         >
           <Search className="h-4 w-4" />
           {type === "earn" ? "Earn More" : "Borrow More"}
