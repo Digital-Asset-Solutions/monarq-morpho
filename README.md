@@ -6,7 +6,7 @@ they share.
 ## Installation 
 
 To get started:
-
+ 
 ```shell
 git clone https://github.com/morpho-org/morpho-lite-apps.git
 cd morpho-lite-apps
