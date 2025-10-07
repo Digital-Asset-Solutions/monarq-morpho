@@ -75,16 +75,7 @@ export function Footer() {
               <DialogTitle>IPFS Versions</DialogTitle>
               <DialogDescription>
                 For better reliability and security, you can use this app through IPFS. It gives you a cryptographic
-                guarantee that you're using a specific version of the app, which can help prevent future{" "}
-                <a
-                  className="underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://www.bleepingcomputer.com/news/security/lazarus-hacked-bybit-via-breached-safe-wallet-developer-machine/"
-                >
-                  supply chain attacks.
-                </a>
-                <br />
+                guarantee that you're using a specific version of the app, which can help prevent future <br />
                 <br />
                 Simply click a version number to access the app through dweb. You can also add it to{" "}
                 <a

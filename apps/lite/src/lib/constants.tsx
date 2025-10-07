@@ -13,7 +13,7 @@ export const APP_DETAILS = {
   icon: "/favicon.svg",
 };
 
-export const WORDMARK = "/lazarus.svg"; // Replace with "/your-wordmark.svg" to customize interface
+export const WORDMARK = "/monarq-brand-kit/Logos/Horizontal/SVG/monarq_horizontal_b.svg"; // Replace with "/your-wordmark.svg" to customize interface
 
 export const MIN_TIMELOCK = 3 * 24 * 60 * 60; // For filtering vaults
 
