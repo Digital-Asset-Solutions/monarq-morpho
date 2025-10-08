@@ -473,7 +473,7 @@ function InteractionSection({
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
                 Deposit {asset.symbol ?? ""}
-                <img className="rounded-full" height={16} width={16} src={asset.imageSrc} />
+                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
               </div>
               <TokenAmountInput
                 decimals={0}
@@ -508,7 +508,7 @@ function InteractionSection({
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
                 Withdraw {asset.symbol ?? ""}
-                <img className="rounded-full" height={16} width={16} src={asset.imageSrc} />
+                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
               </div>
               <TokenAmountInput
                 decimals={asset.decimals}

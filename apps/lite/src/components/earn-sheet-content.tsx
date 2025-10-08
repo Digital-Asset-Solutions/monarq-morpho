@@ -112,7 +112,7 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
       <div className="bg-primary mx-4 flex flex-col gap-4 rounded-2xl p-4">
         <div className={STYLE_LABEL}>
           My position {asset.symbol ? `(${asset.symbol})` : ""}
-          <img className="rounded-full" height={16} width={16} src={asset.imageSrc} />
+          <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
         </div>
         <p className="text-lg font-medium">
           {maxes !== undefined && asset.decimals !== undefined ? formatBalance(maxes[0], asset.decimals, 5) : "－"}
@@ -139,7 +139,7 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Deposit {asset.symbol ?? ""}
-              <img className="rounded-full" height={16} width={16} src={asset.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={asset.decimals}
@@ -173,7 +173,7 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Withdraw {asset.symbol ?? ""}
-              <img className="rounded-full" height={16} width={16} src={asset.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={asset.decimals}

@@ -293,7 +293,7 @@ export function BorrowSheetContent({
       <div className="bg-primary mx-4 flex flex-col gap-4 rounded-2xl p-4">
         <div className={STYLE_LABEL}>
           My collateral position {collateralSymbol ? `(${collateralSymbol})` : ""}
-          <img className="max-h-[16px] rounded-full" height={16} width={16} src={collateralImgSrc} />
+          <img className="h-6 rounded-full" height={24} width={24} src={collateralImgSrc} />
         </div>
         <PositionProperty
           current={tryFormatBalance(accrualPosition?.collateral, collateralDecimals, 5) ?? "－"}
@@ -301,7 +301,7 @@ export function BorrowSheetContent({
         />
         <div className={STYLE_LABEL}>
           My loan position {loanSymbol ? `(${loanSymbol})` : ""}
-          <img className="max-h-[16px] rounded-full" height={16} width={16} src={loanImgSrc} />
+          <img className="h-6 rounded-full" height={24} width={24} src={loanImgSrc} />
         </div>
         <PositionProperty
           current={tryFormatBalance(accrualPosition?.borrowAssets, loanDecimals) ?? "－"}
@@ -343,7 +343,7 @@ export function BorrowSheetContent({
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Supply Collateral {token?.symbol ?? ""}
-              <img className="max-h-[16px] rounded-full" height={16} width={16} src={token?.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={token?.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
@@ -374,7 +374,7 @@ export function BorrowSheetContent({
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Withdraw Collateral {token?.symbol ?? ""}
-              <img className="max-h-[16px] rounded-full" height={16} width={16} src={token?.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={token?.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
@@ -391,7 +391,7 @@ export function BorrowSheetContent({
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Borrow {token?.symbol ?? ""}
-              <img className="max-h-[16px] rounded-full" height={16} width={16} src={token?.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={token?.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
@@ -408,7 +408,7 @@ export function BorrowSheetContent({
           <div className={STYLE_INPUT_WRAPPER}>
             <div className={STYLE_INPUT_HEADER}>
               Repay {token?.symbol ?? ""}
-              <img className="max-h-[16px] rounded-full" height={16} width={16} src={token?.imageSrc} />
+              <img className="h-6 rounded-full" height={24} width={24} src={token?.imageSrc} />
             </div>
             <TokenAmountInput
               decimals={token?.decimals}

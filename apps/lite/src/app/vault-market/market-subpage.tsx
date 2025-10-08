@@ -561,7 +561,7 @@ function InteractionSection({
               <div className={STYLE_INPUT_WRAPPER}>
                 <div className={STYLE_INPUT_HEADER}>
                   {action} {currentToken.symbol ?? ""}
-                  <img className="rounded-full" height={16} width={16} src={currentToken.imageSrc} />
+                  <img className="h-6 rounded-full" height={24} width={24} src={currentToken.imageSrc} />
                 </div>
                 <TokenAmountInput
                   decimals={currentToken.decimals ?? 18}
