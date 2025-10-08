@@ -11,7 +11,7 @@ To get started:
 git clone https://github.com/morpho-org/morpho-lite-apps.git 
 cd morpho-lite-apps
 # Install packages
-pnpm install 
+pnpm install  
 # Run
 pnpm run fallback-app:dev # ← for fallback app
 pnpm run lite-app:dev # ← for fallback app
