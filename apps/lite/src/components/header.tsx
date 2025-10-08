@@ -44,7 +44,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
         {Banner(chainId)}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center gap-3">
-            {WORDMARK.length > 0 ? <img className="ml-2 h-12" src={WORDMARK} alt="Monarq" /> : <MorphoMenu />}
+            {WORDMARK.length > 0 ? <img className="h-12" src={WORDMARK} alt="Monarq" /> : <MorphoMenu />}
           </div>
         </div>
       </SidebarHeader>
