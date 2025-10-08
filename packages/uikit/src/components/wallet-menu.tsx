@@ -101,7 +101,7 @@ function WalletButton({ address }: { address: Address }) {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="tertiary" size="lg" className="rounded-full border p-3 font-light">
-          <Avatar className="h-4 w-4">
+          <Avatar className="h-6 w-6">
             <AvatarImage src={ensAvatar ?? blo(address)} alt="Avatar" />
           </Avatar>
           <span className="hidden lg:block">{ensName ?? abbreviateAddress(address)}</span>
@@ -109,7 +109,7 @@ function WalletButton({ address }: { address: Address }) {
       </PopoverTrigger>
       <PopoverContent className="w-min rounded-xl border-none bg-white" align="end" sideOffset={20}>
         <div className="flex items-center gap-2 font-mono text-sm font-light">
-          <Avatar className="h-4 w-4">
+          <Avatar className="h-6 w-6">
             <AvatarImage src={ensAvatar ?? blo(address)} alt="Avatar" />
           </Avatar>
           {`${address.slice(0, 10)}...${address.slice(-8)}`}
@@ -184,7 +184,10 @@ export function WalletMenu({
           }
         }}
       >
-        <SelectTrigger className="h-[40px] w-16 cursor-pointer rounded-full bg-white">
+        <SelectTrigger
+          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center bg-white p-0 [&>svg]:hidden"
+          style={{ borderRadius: "8px" }}
+        >
           <SelectValue aria-label={chainInUi?.name}>
             <ChainIcon id={chainInUi?.id} />
           </SelectValue>

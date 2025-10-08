@@ -8,7 +8,10 @@ import { useOutletContext } from "react-router";
 import { type Address, erc20Abi, type Chain, type Hex } from "viem";
 import { useAccount, useReadContracts } from "wagmi";
 
-import { BorrowPositionTable, BorrowTable } from "@/components/borrow-table";
+import {
+  //BorrowPositionTable,
+  BorrowTable,
+} from "@/components/borrow-table";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useVaults } from "@/hooks/use-vaults";
@@ -116,6 +119,7 @@ export function BorrowSubPage() {
   if (status === "reconnecting") return undefined;
 
   const userMarkets = marketsArr.filter((market) => positions?.get(market.id)?.collateral ?? 0n > 0n);
+  console.log(userMarkets);
 
   // Show message if no markets are available
   if (marketsArr.length === 0) {
@@ -133,7 +137,7 @@ export function BorrowSubPage() {
 
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
-      {userMarkets.length > 0 && (
+      {/* {userMarkets.length > 0 && (
         <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
           <div className="text-primary-foreground w-full">
             <BorrowPositionTable
@@ -146,7 +150,7 @@ export function BorrowSubPage() {
             />
           </div>
         </div>
-      )}
+      )} */}
       {/*
       Outer div ensures background color matches the end of the gradient from the div above,
       allowing rounded corners to show correctly. Inner div defines rounded corners and table background.

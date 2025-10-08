@@ -18,7 +18,7 @@ export const edenTokenList = {
       decimals: 18,
       chainId: 3735928814,
       address: "0x0000000000000000000000000000000000000000" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/2/1724756690647.png",
     },
     {
       name: "Mock Asset",
@@ -26,7 +26,7 @@ export const edenTokenList = {
       decimals: 18,
       chainId: 3735928814,
       address: "0x8fe895Fb093801B0a7c9399c95Ec8322110AF69c" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/2/1724756690647.png",
     },
     {
       name: "WETH Collateral",
@@ -34,7 +34,7 @@ export const edenTokenList = {
       decimals: 18,
       chainId: 3735928814,
       address: "0x6cE373b8ed0fF1c68B67d88E44076Aa2C480Fd2f" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/2518/small/weth.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/306/1722510537709.png",
     },
     {
       name: "USDC Collateral",
@@ -42,7 +42,7 @@ export const edenTokenList = {
       decimals: 6,
       chainId: 3735928814,
       address: "0x05B95F576aC62005BC7bDaA3c1a25b720377973E" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/14/1728310128919.png",
     },
     {
       name: "EDEN WETH",
@@ -50,7 +50,7 @@ export const edenTokenList = {
       decimals: 18,
       chainId: 3735928814,
       address: "0xbA207113AAFbd1805786a953177eCdE780e5BbAB" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/2518/small/weth.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/306/1722510537709.png",
     },
     {
       name: "EDEN USDC",
@@ -58,7 +58,7 @@ export const edenTokenList = {
       decimals: 6,
       chainId: 3735928814,
       address: "0xF8e5aD1507f6b7e1637b4d20c115b470D48C582E" as Address,
-      logoURI: "https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png",
+      logoURI: "https://resources.cryptocompare.com/asset-management/14/1728310128919.png",
     },
   ],
 };

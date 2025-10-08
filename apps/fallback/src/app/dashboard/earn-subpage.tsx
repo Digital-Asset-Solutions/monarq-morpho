@@ -31,7 +31,7 @@ import { RequestChart } from "@/components/request-chart";
 function TokenTableCell({ address, symbol, imageSrc }: Token) {
   return (
     <div className="flex items-center gap-2">
-      <Avatar className="h-4 w-4 rounded-sm">
+      <Avatar className="h-6 w-6 rounded-sm">
         <AvatarImage src={imageSrc} alt="Avatar" />
         <AvatarFallback delayMs={500}>
           <img src={blo(address)} />

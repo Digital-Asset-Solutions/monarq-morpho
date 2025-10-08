@@ -37,7 +37,7 @@ function TokenTableCell({ address, symbol, imageSrc, chain }: Token & { chain: C
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
-            <Avatar className="size-4 rounded-full">
+            <Avatar className="size-6 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
                 <img src={blo(address)} />
@@ -60,7 +60,7 @@ function TokenTableCell({ address, symbol, imageSrc, chain }: Token & { chain: C
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                <ExternalLink className="size-4" />
+                <ExternalLink className="size-6" />
               </a>
             )}
           </div>
@@ -158,7 +158,7 @@ function VaultsTableCell({
                   target="_blank"
                 >
                   {abbreviateAddress(vault.address)}
-                  <ExternalLink className="size-4" />
+                  <ExternalLink className="size-6" />
                 </a>
               </div>
               <div className="flex items-center justify-between font-light">
@@ -175,7 +175,7 @@ function VaultsTableCell({
                         target="_blank"
                       >
                         {curator.imageSrc && (
-                          <Avatar className="size-4 rounded-full">
+                          <Avatar className="size-6 rounded-full">
                             <AvatarImage src={curator.imageSrc} alt="Loan Token" />
                           </Avatar>
                         )}
@@ -188,7 +188,7 @@ function VaultsTableCell({
                 <div className="flex items-center justify-between font-light">
                   Total Supply
                   <div className="flex items-end gap-1">
-                    <Avatar className="size-4 rounded-full">
+                    <Avatar className="size-6 rounded-full">
                       <AvatarImage src={token.imageSrc} alt="Loan Token" />
                     </Avatar>
                     {formatBalanceWithSymbol(vault.totalAssets, token.decimals, token.symbol, 5, true)}
@@ -299,7 +299,7 @@ export function BorrowTable({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="size-4" />
+                      <Info className="size-6" />
                     </TooltipTrigger>
                     <TooltipContent className="text-primary-foreground max-w-56 rounded-3xl p-4 text-xs shadow-2xl">
                       This value will be smaller than that of the full app. It doesn't include{" "}

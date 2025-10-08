@@ -71,7 +71,7 @@ export function RewardsButton({ chainId }: { chainId: number | undefined }) {
               key={reward.token.address}
               className="border-tertiary flex items-center justify-start gap-2 border-b p-2"
             >
-              <Avatar className="h-4 w-4 rounded-full">
+              <Avatar className="h-6 w-6 rounded-full">
                 <AvatarImage
                   src={getTokenURI({
                     symbol: reward.token.symbol,

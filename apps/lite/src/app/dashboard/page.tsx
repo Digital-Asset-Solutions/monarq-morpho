@@ -1,5 +1,5 @@
 import { Button } from "@morpho-org/uikit/components/shadcn/button";
-import { SidebarInset, SidebarTrigger } from "@morpho-org/uikit/components/shadcn/sidebar";
+import { SidebarInset } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
@@ -84,8 +84,8 @@ export default function Page() {
     <AppSidebarLayout>
       <AppSidebar chainId={chain?.id} />
       <SidebarInset className="flex flex-col">
-        <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b px-4 backdrop-blur">
-          <SidebarTrigger className="-ml-1" />
+        <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end border-b px-4 backdrop-blur">
+          {/* <SidebarTrigger className="-ml-1" /> */}
           <div className="mr-2 flex items-center gap-2">
             <RewardsButton chainId={chain?.id} />
             <WalletMenu

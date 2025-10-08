@@ -55,7 +55,7 @@ function VaultTableCell({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
-            <Avatar className="h-4 w-4 rounded-full">
+            <Avatar className="h-6 w-6 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
                 <img src={blo(address)} />
@@ -111,7 +111,7 @@ export function CuratorTableCell({
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
           <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
-            <Avatar className="h-4 w-4 rounded-full">
+            <Avatar className="h-6 w-6 rounded-full">
               <AvatarImage src={imageSrc ?? ""} alt="Avatar" />
               <AvatarFallback delayMs={500}>
                 <img src={blo(hashMessage(name).padEnd(42, "0").slice(0, 42) as Address)} />
@@ -189,7 +189,7 @@ function CollateralsTableCell({
               <div className="flex items-center justify-between font-light">
                 Collateral
                 <div className="flex items-end gap-1">
-                  <Avatar className="h-4 w-4 rounded-full">
+                  <Avatar className="h-6 w-6 rounded-full">
                     <AvatarImage src={logoUrl[0]} alt="Avatar" />
                     <AvatarFallback delayMs={500}>
                       <img src={logoUrl[1]} />

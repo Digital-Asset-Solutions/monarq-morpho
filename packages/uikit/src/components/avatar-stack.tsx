@@ -38,7 +38,7 @@ function AvatarItem({
 
   const avatarContent = (
     <div className={cn(`transition-margin relative duration-500 ease-in-out`, marginClass)}>
-      <Avatar className="h-4 w-4 rounded-full">
+      <Avatar className="h-6 w-6 rounded-full">
         <AvatarImage src={Array.isArray(item.logoUrl) ? item.logoUrl[0] : item.logoUrl} alt="Avatar" />
         {Array.isArray(item.logoUrl) && item.logoUrl.length >= 2 && (
           <AvatarFallback delayMs={500}>

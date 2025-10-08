@@ -334,50 +334,58 @@ export function DashboardSubPage() {
   if (status === "reconnecting") return undefined;
 
   return (
-    <div className="w-[calc(100vw-35px)] space-y-6 md:w-full">
+    <div className="w-[calc(100vw-35px)] space-y-6 px-2.5 md:w-full">
       {/* Show earn table if user has earn positions */}
-      <div className="rounded-xl bg-white">
-        <div className="flex items-center justify-start gap-2 p-4">
-          <h2 className="text-xl">Earn</h2>
-          <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-            {userRows.length} positions / $0.00
-          </span>
+      <div className="flex grow flex-col">
+        <div className="bg-background border-border/50 flex h-full grow justify-center rounded-xl border pb-16 shadow-sm">
+          <div className="w-full">
+            <div className="flex items-center justify-start gap-2 p-4">
+              <h2 className="text-xl">Earn</h2>
+              <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
+                {userRows.length} positions / $0.00
+              </span>
+            </div>
+            {userRows.length > 0 ? (
+              <EarnTable
+                chain={chain}
+                rows={userRows}
+                depositsMode="userAssets"
+                tokens={tokens}
+                lendingRewards={lendingRewards}
+                displayHeader={false}
+              />
+            ) : (
+              <EmptyState type="earn" />
+            )}
+          </div>
         </div>
-        {userRows.length > 0 ? (
-          <EarnTable
-            chain={chain}
-            rows={userRows}
-            depositsMode="userAssets"
-            tokens={tokens}
-            lendingRewards={lendingRewards}
-            displayHeader={false}
-          />
-        ) : (
-          <EmptyState type="earn" />
-        )}
       </div>
 
       {/* Show borrow table if user has borrow positions */}
-      <div className="rounded-xl bg-white">
-        <div className="flex items-center justify-start gap-2 p-4">
-          <h2 className="text-xl">Borrow</h2>
-          <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-            {userBorrowMarkets.length} positions / $0.00
-          </span>
+      <div className="flex grow flex-col">
+        <div className="bg-background border-border/50 flex h-full grow justify-center rounded-xl border pb-16 shadow-sm">
+          <div className="w-full">
+            <div className="flex items-center justify-start gap-2 p-4">
+              <h2 className="text-xl">Borrow</h2>
+              <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
+                {userBorrowMarkets.length} positions / $0.00
+              </span>
+            </div>
+            {userBorrowMarkets.length > 0 ? (
+              <BorrowPositionTable
+                chain={chain}
+                markets={userBorrowMarkets}
+                tokens={tokens}
+                positions={positionsMap}
+                borrowingRewards={borrowingRewards}
+                refetchPositions={refetchPositions}
+                displayHeader={false}
+              />
+            ) : (
+              <EmptyState type="borrow" />
+            )}
+          </div>
         </div>
-        {userBorrowMarkets.length > 0 ? (
-          <BorrowPositionTable
-            chain={chain}
-            markets={userBorrowMarkets}
-            tokens={tokens}
-            positions={positionsMap}
-            borrowingRewards={borrowingRewards}
-            refetchPositions={refetchPositions}
-            displayHeader={false}
-          />
-        ) : (
-          <EmptyState type="borrow" />
-        )}
       </div>
     </div>
   );

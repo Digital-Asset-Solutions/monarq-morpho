@@ -94,7 +94,7 @@ export function CuratorSelect({ value, onChange, curators, className }: CuratorS
         {filteredCurators.map((curator) => (
           <SelectItem key={curator.name} value={curator.name.toLowerCase()}>
             <div className="flex items-center gap-2">
-              <Avatar className="h-4 w-4 rounded-full">
+              <Avatar className="h-6 w-6 rounded-full">
                 <AvatarImage src={curator.imageSrc ?? ""} alt={curator.name} />
                 <AvatarFallback delayMs={500}>
                   <img src={blo(hashMessage(curator.name).padEnd(42, "0").slice(0, 42) as Address)} />

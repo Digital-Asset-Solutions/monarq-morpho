@@ -78,22 +78,24 @@ export function EarnSubPage() {
   }, [vaults, tokens, userShares, topCurators, chainId]);
 
   const userRows = rows.filter((row) => (row.userShares ?? 0n) > 0n);
-
+  console.log(userRows);
   if (status === "reconnecting") return undefined;
 
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
-      {userRows.length > 0 && (
-        <div className="bg-linear-to-b lg:pt-22 flex h-fit w-full flex-col items-center from-transparent to-white/[0.03] pb-20">
-          <EarnTable
-            chain={chain}
-            rows={userRows}
-            depositsMode="userAssets"
-            tokens={tokens}
-            lendingRewards={lendingRewards}
-          />
+      {/* {userRows.length > 0 && (
+        <div className="flex grow flex-col">
+          <div className="bg-background border-border/50 flex h-full grow justify-center rounded-xl border pb-16 shadow-sm">
+            <EarnTable
+              chain={chain}
+              rows={userRows}
+              depositsMode="userAssets"
+              tokens={tokens}
+              lendingRewards={lendingRewards}
+            />
+          </div>
         </div>
-      )}
+      )} */}
       {/*
       Outer div ensures background color matches the end of the gradient from the div above,
       allowing rounded corners to show correctly. Inner div defines rounded corners and table background.

@@ -90,7 +90,7 @@ export function LoanTokenSelect({ value, onChange, tokens, className }: LoanToke
         {filteredTokens.map((token) => (
           <SelectItem key={token.address} value={token.address.toLowerCase()}>
             <div className="flex items-center gap-2">
-              <Avatar className="h-4 w-4 rounded-full">
+              <Avatar className="h-6 w-6 rounded-full">
                 <AvatarImage src={token.imageSrc} alt={token.symbol} />
                 <AvatarFallback delayMs={1000}>
                   <img src={blo(token.address)} />

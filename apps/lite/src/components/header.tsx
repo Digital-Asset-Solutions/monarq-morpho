@@ -40,11 +40,11 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="">
         {Banner(chainId)}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            {WORDMARK.length > 0 ? <img className="ml-2 h-8" src={WORDMARK} alt="Monarq" /> : <MorphoMenu />}
+          <div className="flex items-center justify-center gap-3">
+            {WORDMARK.length > 0 ? <img className="ml-2 h-12" src={WORDMARK} alt="Monarq" /> : <MorphoMenu />}
           </div>
         </div>
       </SidebarHeader>
@@ -66,7 +66,11 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={currentPath.includes("/earn")} className="transition-all duration-200">
+            <SidebarMenuButton
+              asChild
+              isActive={currentPath.includes("/earn") || currentPath.includes("/vault/")}
+              className="transition-all duration-200"
+            >
               <Link to={`/${chainSlug}/earn`} className="px-3 py-5">
                 <CircleDollarSign className="text-secondary h-7 w-7" />
                 <span>Earn</span>
@@ -76,7 +80,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={currentPath.includes("/borrow")}
+              isActive={currentPath.includes("/borrow") || currentPath.includes("/market/")}
               className="transition-all duration-200"
             >
               <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
