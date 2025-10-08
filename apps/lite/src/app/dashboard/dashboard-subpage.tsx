@@ -322,7 +322,7 @@ export function DashboardSubPage() {
         <p className="mb-4 text-sm text-gray-500">You don't have any {type} position.</p>
         <Link
           to={type === "earn" ? `/${chainSlug}/earn` : `/${chainSlug}/borrow`}
-          className="bg-morpho-brand hover:bg-morpho-brand/90 mx-auto flex w-fit items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+          className="bg-morpho-brand hover:bg-morpho-brand/80 mx-auto flex w-fit items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
         >
           <Search className="h-4 w-4" />
           {type === "earn" ? "Earn More" : "Borrow More"}
