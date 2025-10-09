@@ -54,7 +54,7 @@ function VaultTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary hover:text-secondary-foreground flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-primary flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-6 w-6 rounded-full">
               <AvatarImage src={imageSrc} alt="Avatar" />
               <AvatarFallback delayMs={1000}>
