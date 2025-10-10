@@ -24,7 +24,7 @@ After running the commands above, open [http://localhost:5173/](http://localhost
 ### Fallback
 
 > A resilient frontend, designed for emergencies with minimal dependencies
-
+ 
 - 🦋 View your deposits in MetaMorpho vaults
 - 🌌 View your borrow positions
 - 📤 Withdraw from MetaMorpho vaults
