@@ -35,7 +35,7 @@ After running the commands above, open [http://localhost:5173/](http://localhost
 ### Lite
 
 > A lightweight frontend, designed for rapid multichain expansion without compromising quality in the main app
-
+ 
 All features from the Fallback App, plus:
 
 - 👀 Explore all whitelisted vaults and markets, rather than just those you've used before
