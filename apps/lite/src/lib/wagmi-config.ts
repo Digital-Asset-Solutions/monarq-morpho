@@ -65,7 +65,7 @@ function createAlchemyHttp(slug: string): ({ url: string } & HttpTransportConfig
 */
 
 // LITE APP: Lisk and Eden chains supported
-const chains = [lisk, customChains.eden] as const;
+const chains = [customChains.eden] as const;
 
 /* ORIGINAL CHAINS CONFIG - commented for rollback
 const chains = [
