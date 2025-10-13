@@ -476,7 +476,7 @@ function InteractionSection({
                 <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
               </div>
               <TokenAmountInput
-                decimals={0}
+                decimals={asset.decimals}
                 value={textInputValue}
                 maxValue={maxes?.[2]}
                 onChange={setTextInputValue}
