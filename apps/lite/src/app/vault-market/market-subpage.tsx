@@ -30,7 +30,7 @@ enum Actions {
 const STALE_TIME = 5 * 60 * 1000;
 
 const STYLE_TAB = "hover:bg-secondary/10 rounded-sm px-5 duration-200 ease-in-out cursor-pointer";
-const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col gap-4 rounded-2xl p-4 transition-colors duration-200 ease-in-out";
+const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
 
 // Header Section Component
@@ -267,8 +267,8 @@ function VaultsSection({
                   <Link key={index} to={`/${chainSlug}/vault/${vault.address}`} className="contents">
                     <div className="hover:bg-primary grid cursor-pointer grid-cols-4 items-center gap-4 border-b p-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full">
-                          <img src={loanToken.imageSrc} alt={vault.name} className="h-6 w-6 rounded-full" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full">
+                          <img src={loanToken.imageSrc} alt={vault.name} className="rounded-full" />
                         </div>
                         <span className="font-medium">{vault.name}</span>
                       </div>
@@ -561,11 +561,15 @@ function InteractionSection({
               <div className={STYLE_INPUT_WRAPPER}>
                 <div className={STYLE_INPUT_HEADER}>
                   {action} {currentToken.symbol ?? ""}
-                  <img className="h-6 rounded-full" height={24} width={24} src={currentToken.imageSrc} />
+                  <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                    <img className="h-6 rounded-full" height={24} width={24} src={currentToken.imageSrc} />
+                    {currentToken.symbol ?? ""}
+                  </span>
                 </div>
                 <TokenAmountInput
                   decimals={currentToken.decimals ?? 18}
                   value={textInputValue}
+                  symbol={currentToken.symbol ?? ""}
                   maxValue={maxValue}
                   onChange={setTextInputValue}
                   usdPrice={

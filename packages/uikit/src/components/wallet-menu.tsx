@@ -100,7 +100,7 @@ function WalletButton({ address }: { address: Address }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="tertiary" size="lg" className="rounded-full border p-3 font-light">
+        <Button variant="tertiary" size="lg" className="border p-3 font-light">
           <Avatar className="h-6 w-6">
             <AvatarImage src={ensAvatar ?? blo(address)} alt="Avatar" />
           </Avatar>

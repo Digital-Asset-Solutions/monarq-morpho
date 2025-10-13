@@ -34,7 +34,7 @@ enum Actions {
 const STALE_TIME = 5 * 60 * 1000;
 
 const STYLE_TAB = "hover:bg-secondary/10 rounded-sm x-5 duration-200 ease-in-out cursor-pointer";
-const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col gap-4 rounded-2xl p-4 transition-colors duration-200 ease-in-out";
+const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
 
 // Header Section Component
@@ -148,7 +148,7 @@ function VaultDetailsGrid({
       <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
         <p className="text-muted-foreground mb-2 text-sm">Vault Token</p>
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full">
             <span className="text-xs text-white">
               <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6 rounded-full" />
             </span>
@@ -472,12 +472,16 @@ function InteractionSection({
           <TabsContent value={Actions.Deposit}>
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
-                Deposit {asset.symbol ?? ""}
-                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                Your Deposit
+                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                  <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                  {asset.symbol ?? ""}
+                </span>
               </div>
               <TokenAmountInput
                 decimals={asset.decimals}
                 value={textInputValue}
+                symbol={asset.symbol ?? ""}
                 maxValue={maxes?.[2]}
                 onChange={setTextInputValue}
                 usdPrice={tokenPriceInUSD}
@@ -507,13 +511,17 @@ function InteractionSection({
           <TabsContent value={Actions.Withdraw}>
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
-                Withdraw {asset.symbol ?? ""}
-                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                Your Withdrawal
+                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                  <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                  {asset.symbol ?? ""}
+                </span>
               </div>
               <TokenAmountInput
                 decimals={asset.decimals}
                 value={textInputValue}
                 maxValue={maxes?.[0]}
+                symbol={asset.symbol ?? ""}
                 onChange={setTextInputValue}
                 usdPrice={tokenPriceInUSD}
               />
