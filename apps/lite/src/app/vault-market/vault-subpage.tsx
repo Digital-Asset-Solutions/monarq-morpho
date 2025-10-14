@@ -33,9 +33,9 @@ enum Actions {
 
 const STALE_TIME = 5 * 60 * 1000;
 
-const STYLE_TAB = "hover:bg-secondary/10 rounded-sm x-5 duration-200 ease-in-out cursor-pointer";
+const STYLE_TAB = "hover:bg-primary rounded-sm x-5 duration-200 ease-in-out cursor-pointer";
 const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
-const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
+const STYLE_INPUT_HEADER = "flex items-start justify-between text-xs font-light";
 
 // Header Section Component
 function VaultHeader() {
@@ -394,18 +394,21 @@ function InteractionSection({
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
   const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
-  const userBalance = formatUnits(userShare, asset.decimals ?? 18);
-  const projectedBalance = formatUnits(
-    selectedTab === Actions.Deposit ? userShare + (inputValue ?? 0n) : userShare - (inputValue ?? 0n),
+  // Compute user's deposit as asset equivalent of shares; this matches dashboard logic
+  // Only compute when we have valid user shares, otherwise show 0
+  const currentAssets = userShare && userShare > 0n ? vault.toAssets(userShare) : 0n;
+  const userAssetBalance = formatUnits(currentAssets, asset.decimals ?? 18);
+  const projectedAssetBalance = formatUnits(
+    selectedTab === Actions.Deposit ? currentAssets + (inputValue ?? 0n) : currentAssets - (inputValue ?? 0n),
     asset.decimals ?? 18,
   );
   const rewardsApy = parseUnits(rewards.reduce((acc, x) => acc + x.apr, 0).toString(), 16);
   const { netApy } = computeNetApy(vault.apy, vault.fee, rewardsApy, "earn");
   const apyToComputeEarnings = formatUnits(netApy, 18);
-  const yearlyEarnings = parseFloat(userBalance) * parseFloat(apyToComputeEarnings);
-  const monthlyEarnings = yearlyEarnings / 12;
+  const yearlyEarningsUSD = parseFloat(userAssetBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
+  const monthlyEarningsUSD = yearlyEarningsUSD / 12;
   const projectedYearlyEarningsUSD =
-    parseFloat(projectedBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
+    parseFloat(projectedAssetBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
   const projectedMonthlyEarningsUSD = projectedYearlyEarningsUSD / 12;
   const isMaxed = inputValue === maxes?.[0];
 
@@ -472,8 +475,8 @@ function InteractionSection({
           <TabsContent value={Actions.Deposit}>
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
-                Your Deposit
-                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                <span className="mt-1">Your Deposit</span>
+                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 text-[14px] font-bold">
                   <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
                   {asset.symbol ?? ""}
                 </span>
@@ -511,7 +514,7 @@ function InteractionSection({
           <TabsContent value={Actions.Withdraw}>
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
-                Your Withdrawal
+                <span className="mt-1">Your Withdrawal</span>
                 <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
                   <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
                   {asset.symbol ?? ""}
@@ -548,7 +551,7 @@ function InteractionSection({
             <span className="text-muted-foreground text-xs">Your Deposit ({asset.symbol})</span>
             <div className="flex items-center gap-2">
               <span className={inputValue && inputValue > 0n ? "text-muted-foreground" : ""}>
-                {formatReadableDecimalNumber({ value: parseFloat(userBalance), maxDecimals: 2 })}
+                {formatReadableDecimalNumber({ value: parseFloat(userAssetBalance), maxDecimals: 2 })}
               </span>
               {!!inputValue && inputValue > 0n && (
                 <>
@@ -556,7 +559,7 @@ function InteractionSection({
                     <ChevronRight />
                   </span>
                   <span className="font-medium">
-                    {formatReadableDecimalNumber({ value: parseFloat(projectedBalance), maxDecimals: 2 })}
+                    {formatReadableDecimalNumber({ value: parseFloat(projectedAssetBalance), maxDecimals: 2 })}
                   </span>
                 </>
               )}
@@ -567,7 +570,7 @@ function InteractionSection({
             <span className="text-muted-foreground text-xs">Projected Earnings / Month (USD)</span>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">
-                ${formatReadableDecimalNumber({ value: monthlyEarnings, maxDecimals: 2 })}
+                ${formatReadableDecimalNumber({ value: monthlyEarningsUSD, maxDecimals: 2 })}
               </span>
               <span className="text-xl">
                 <ChevronRight />
@@ -582,7 +585,7 @@ function InteractionSection({
             <span className="text-muted-foreground text-xs">Projected Earnings / Year (USD)</span>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">
-                ${formatReadableDecimalNumber({ value: yearlyEarnings, maxDecimals: 2 })}
+                ${formatReadableDecimalNumber({ value: yearlyEarningsUSD, maxDecimals: 2 })}
               </span>
               <span className="text-xl">
                 <ChevronRight />
@@ -604,7 +607,7 @@ export function VaultSubPage() {
   const { address: vaultAddress } = useParams();
   const { chain } = useOutletContext() as { chain?: Chain };
   const chainId = chain?.id ?? 1;
-  const { vaultsData, vaults, topCurators, userShares } = useVaults({ chainId, staleTime: STALE_TIME });
+  const { vaultsData, vaults, topCurators, userShares } = useVaults({ chainId, staleTime: STALE_TIME, userAddress });
   const currentVaultData = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
   const currentVault = vaults?.find((vault) => vault.address === vaultAddress);
   const tokenAddress = currentVaultData?.vault.asset;

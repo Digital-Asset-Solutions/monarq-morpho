@@ -110,7 +110,7 @@ export function CuratorTableCell({
     <TooltipProvider>
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-primary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             <Avatar className="h-6 w-6 rounded-full">
               <AvatarImage src={imageSrc ?? ""} alt="Avatar" />
               <AvatarFallback delayMs={500}>

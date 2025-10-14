@@ -28,7 +28,7 @@ export function ApyTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary hover:text-secondary-foreground group ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-primary group ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             {formatApy(netApy)}
             {rewards.length > 0 && (
               <Sparkles className="text-morpho-brand group-hover:text-secondary-foreground h-4 w-4" />

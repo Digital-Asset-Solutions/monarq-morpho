@@ -49,9 +49,14 @@ export function TokenAmountInput({
         disabled={decimals === undefined}
       />
       <div className="flex h-5 items-center justify-between">
-        {usdPrice !== undefined && usdValue !== undefined && (
+        {usdPrice !== undefined && usdValue !== undefined ? (
           <p className="text-muted-foreground text-right text-xs font-light">
             ${formatReadableDecimalNumber({ value: usdValue, maxDecimals: 2, letters: false })}
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-right text-xs font-light">
+            {/* eslint-disable-next-line */}
+            $0.00
           </p>
         )}
 

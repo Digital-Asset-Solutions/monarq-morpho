@@ -97,7 +97,7 @@ function HealthTableCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="hover:bg-secondary hover:text-secondary-foreground ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
+          <div className="hover:bg-primary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
             {ltvText} / {lltvText}
           </div>
         </TooltipTrigger>

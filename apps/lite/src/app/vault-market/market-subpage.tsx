@@ -29,9 +29,9 @@ enum Actions {
 
 const STALE_TIME = 5 * 60 * 1000;
 
-const STYLE_TAB = "hover:bg-secondary/10 rounded-sm px-5 duration-200 ease-in-out cursor-pointer";
+const STYLE_TAB = "hover:bg-primary rounded-sm px-5 duration-200 ease-in-out cursor-pointer";
 const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
-const STYLE_INPUT_HEADER = "flex items-center justify-between text-xs font-light";
+const STYLE_INPUT_HEADER = "flex items-start justify-between text-xs font-light";
 
 // Header Section Component
 function MarketHeader() {
@@ -560,8 +560,10 @@ function InteractionSection({
             <TabsContent key={action} value={action}>
               <div className={STYLE_INPUT_WRAPPER}>
                 <div className={STYLE_INPUT_HEADER}>
-                  {action} {currentToken.symbol ?? ""}
-                  <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                  <span className="mt-1">
+                    {action} {currentToken.symbol ?? ""}
+                  </span>
+                  <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 text-[14px] font-bold">
                     <img className="h-6 rounded-full" height={24} width={24} src={currentToken.imageSrc} />
                     {currentToken.symbol ?? ""}
                   </span>
