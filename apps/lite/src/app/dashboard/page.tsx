@@ -15,6 +15,7 @@ enum SubPage {
   Earn = "earn",
   Borrow = "borrow",
   Dashboard = "dashboard",
+  Faucet = "faucet",
   Vault = "vault",
   Market = "market",
 }
@@ -76,7 +77,9 @@ export default function Page() {
         ? "Vault"
         : selectedSubPage === SubPage.Market
           ? "Market"
-          : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
+          : selectedSubPage === SubPage.Faucet
+            ? "Faucet"
+            : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
     document.title = `${APP_DETAILS.name} | ${title}`;
   }, [selectedSubPage]);
 

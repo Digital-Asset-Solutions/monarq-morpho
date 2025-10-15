@@ -167,71 +167,73 @@ function CollateralsTableCell({
   // Sort allocations largest to smallest
   allocations.sort((a, b) => (a[1].proportion > b[1].proportion ? -1 : 1));
   return (
-    <AvatarStack
-      items={allocations.map(([collateral, allocation]) => {
-        const token = tokens.get(collateral);
-        const logoUrl = [
-          getTokenURI({ symbol: token?.symbol, address: collateral, chainId: chain?.id }),
-          blo(collateral),
-        ];
-        const lltvs = [...allocation.lltvs.values()];
-        const oracles = [...allocation.oracles];
+    <TooltipProvider>
+      <AvatarStack
+        items={allocations.map(([collateral, allocation]) => {
+          const token = tokens.get(collateral);
+          const logoUrl = [
+            getTokenURI({ symbol: token?.symbol, address: collateral, chainId: chain?.id }),
+            blo(collateral),
+          ];
+          const lltvs = [...allocation.lltvs.values()];
+          const oracles = [...allocation.oracles];
 
-        // Sort LLTVs smallest to largest
-        lltvs.sort((a, b) => (a > b ? 1 : -1));
+          // Sort LLTVs smallest to largest
+          lltvs.sort((a, b) => (a > b ? 1 : -1));
 
-        const hoverCardContent = (
-          <TooltipContent
-            className="text-primary-foreground rounded-3xl p-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex w-[240px] flex-col gap-3">
-              <div className="flex items-center justify-between font-light">
-                Collateral
-                <div className="flex items-end gap-1">
-                  <Avatar className="h-6 w-6 rounded-full">
-                    <AvatarImage src={logoUrl[0]} alt="Avatar" />
-                    <AvatarFallback delayMs={500}>
-                      <img src={logoUrl[1]} />
-                    </AvatarFallback>
-                  </Avatar>
-                  {token?.symbol ?? ""}
+          const hoverCardContent = (
+            <TooltipContent
+              className="text-primary-foreground rounded-3xl p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex w-[240px] flex-col gap-3">
+                <div className="flex items-center justify-between font-light">
+                  Collateral
+                  <div className="flex items-end gap-1">
+                    <Avatar className="h-6 w-6 rounded-full">
+                      <AvatarImage src={logoUrl[0]} alt="Avatar" />
+                      <AvatarFallback delayMs={500}>
+                        <img src={logoUrl[1]} />
+                      </AvatarFallback>
+                    </Avatar>
+                    {token?.symbol ?? ""}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between font-light">
+                  <span>LLTV</span>
+                  {lltvs.map((lltv) => formatLtv(lltv)).join(", ")}
+                </div>
+                <div className="flex items-center justify-between font-light">
+                  <span>Allocation</span>
+                  {formatLtv(allocation.proportion)}
+                </div>
+                <div className="flex items-center justify-between font-light">
+                  <span>Oracle</span>
+                  <div className="flex flex-col font-mono">
+                    {oracles.map((oracle) => (
+                      <a
+                        key={oracle}
+                        className="flex gap-1"
+                        href={chain?.blockExplorers?.default.url.concat(`/address/${oracle}`)}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {abbreviateAddress(oracle)}
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between font-light">
-                <span>LLTV</span>
-                {lltvs.map((lltv) => formatLtv(lltv)).join(", ")}
-              </div>
-              <div className="flex items-center justify-between font-light">
-                <span>Allocation</span>
-                {formatLtv(allocation.proportion)}
-              </div>
-              <div className="flex items-center justify-between font-light">
-                <span>Oracle</span>
-                <div className="flex flex-col font-mono">
-                  {oracles.map((oracle) => (
-                    <a
-                      key={oracle}
-                      className="flex gap-1"
-                      href={chain?.blockExplorers?.default.url.concat(`/address/${oracle}`)}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      {abbreviateAddress(oracle)}
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </TooltipContent>
-        );
+            </TooltipContent>
+          );
 
-        return { logoUrl, hoverCardContent };
-      })}
-      align="left"
-      maxItems={5}
-    />
+          return { logoUrl, hoverCardContent };
+        })}
+        align="left"
+        maxItems={5}
+      />
+    </TooltipProvider>
   );
 }
 
