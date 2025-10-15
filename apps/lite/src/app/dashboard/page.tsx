@@ -4,7 +4,7 @@ import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
 import { useCallback, useEffect, useMemo } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { useChains } from "wagmi";
 
 import { AppSidebar, AppSidebarLayout } from "@/components/header";
@@ -90,6 +90,11 @@ export default function Page() {
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end border-b px-4 backdrop-blur">
           {/* <SidebarTrigger className="-ml-1" /> */}
           <div className="mr-2 flex items-center gap-2">
+            <Button asChild variant="tertiary" size="lg" className="border p-3 font-light">
+              <Link to={`/${selectedChainSlug}/faucet`}>
+                <span className="hidden md:block">Mint Tokens</span>
+              </Link>
+            </Button>
             <RewardsButton chainId={chain?.id} />
             <WalletMenu
               selectedChainSlug={selectedChainSlug!}

@@ -1,6 +1,8 @@
 import { Address } from "viem";
 
-export const FAUCET_CONTRACT_ADDRESS: Address = "0x9BCB62696882D588fC777aCd2Af6e08C2428e892";
+export const FAUCET_CONTRACT_ADDRESS: Address = "0xD7E876A553c2a01EcBf5C00eb793731663B4F876";
+
+export const ADMIN_ADDRESS: Address = "0x7554ee28c15e61D9B3CEbcC9F5CAcE7742830B05";
 
 export const FAUCET_ABI = [
   {

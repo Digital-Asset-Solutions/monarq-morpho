@@ -12,8 +12,8 @@ export const eden = /*#__PURE__*/ defineChain({
   blockExplorers: {
     default: {
       name: "Eden Testnet Explorer",
-      url: "https://explorer-edennet-1-testnet.binary.builders:8443/",
-      apiUrl: "https://explorer-edennet-1-testnet.binary.builders:8443/api",
+      url: "https://explorer-eden-testnet.binarybuilders.services/",
+      apiUrl: "https://explorer-eden-testnet.binarybuilders.services/api",
     },
   },
   contracts: {

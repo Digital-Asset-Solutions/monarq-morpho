@@ -11,7 +11,7 @@ import {
 } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { useKeyedState } from "@morpho-org/uikit/hooks/use-keyed-state";
 import { cn } from "@morpho-org/uikit/lib/utils";
-import { ArrowUpRight, CircleDollarSign, Droplet, Home, LucideHandCoins, XIcon } from "lucide-react";
+import { ArrowUpRight, CircleDollarSign, Home, LucideHandCoins, XIcon } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 import { MorphoMenu } from "@/components/morpho-menu";
@@ -92,18 +92,6 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
                 <LucideHandCoins className="text-secondary h-7 w-7" />
                 <span>Borrow</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={currentPath.includes("/faucet")}
-              className="transition-all duration-200"
-            >
-              <Link to={`/${chainSlug}/faucet`} className="px-3 py-5">
-                <Droplet className="text-secondary h-7 w-7" />
-                <span>Faucet</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

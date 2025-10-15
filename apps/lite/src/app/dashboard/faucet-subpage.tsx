@@ -1,24 +1,38 @@
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@morpho-org/uikit/components/shadcn/alert-dialog";
 import { Button } from "@morpho-org/uikit/components/shadcn/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@morpho-org/uikit/components/shadcn/card";
 import { Skeleton } from "@morpho-org/uikit/components/shadcn/skeleton";
 import { ConnectKitButton } from "connectkit";
-import { Clock, Droplet } from "lucide-react";
+import { ArrowUpRight, Clock, Droplet, Plus, Minus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { erc20Abi, formatUnits } from "viem";
+import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
-import { FAUCET_ABI, FAUCET_CONTRACT_ADDRESS, FAUCET_TOKENS, FaucetToken } from "@/lib/faucet";
+import { FAUCET_ABI, FAUCET_CONTRACT_ADDRESS, FAUCET_TOKENS, FaucetToken, ADMIN_ADDRESS } from "@/lib/faucet";
 import { getTokenURI } from "@/lib/tokens";
 
 interface TokenCardProps {
   token: FaucetToken;
   chainId?: number;
+  chain?: { blockExplorers?: { default?: { url: string } } };
 }
 
-function TokenCard({ token, chainId }: TokenCardProps) {
+function TokenCard({ token, chainId, chain }: TokenCardProps) {
   const { address: userAddress } = useAccount();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [mintedAmount, setMintedAmount] = useState<string>("");
+  const [transactionHash, setTransactionHash] = useState<string>("");
+  const [adminAmount, setAdminAmount] = useState<string>("");
+
+  const isAdmin = userAddress?.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
 
   // Read token amount from contract
   const { data: tokenAmount, isLoading: isLoadingAmount } = useReadContract({
@@ -75,13 +89,16 @@ function TokenCard({ token, chainId }: TokenCardProps) {
   }, [remainingCooldown]);
 
   useEffect(() => {
-    if (isConfirmed) {
-      toast.success(`${formatUnits(tokenAmount || 0n, token.decimals)} ${token.symbol} minted successfully!`);
+    if (isConfirmed && hash) {
+      const amount = formatUnits(tokenAmount || 0n, token.decimals);
+      setMintedAmount(`${amount} ${token.symbol}`);
+      setTransactionHash(hash);
+      setShowSuccessDialog(true);
       void refetchCanMint();
       void refetchCooldown();
       void refetchBalance();
     }
-  }, [isConfirmed, tokenAmount, token.decimals, token.symbol, refetchCanMint, refetchCooldown, refetchBalance]);
+  }, [isConfirmed, hash, tokenAmount, token.decimals, token.symbol, refetchCanMint, refetchCooldown, refetchBalance]);
 
   const handleMint = () => {
     writeContract({
@@ -89,6 +106,28 @@ function TokenCard({ token, chainId }: TokenCardProps) {
       abi: FAUCET_ABI,
       functionName: "mint",
       args: [token.address],
+    });
+  };
+
+  const handleDeposit = () => {
+    if (!adminAmount) return;
+    const amount = parseUnits(adminAmount, token.decimals);
+    writeContract({
+      address: token.address,
+      abi: erc20Abi,
+      functionName: "transfer",
+      args: [FAUCET_CONTRACT_ADDRESS, amount],
+    });
+  };
+
+  const handleWithdraw = () => {
+    if (!adminAmount) return;
+    const amount = parseUnits(adminAmount, token.decimals);
+    writeContract({
+      address: FAUCET_CONTRACT_ADDRESS,
+      abi: FAUCET_ABI,
+      functionName: "emergencyWithdraw",
+      args: [token.address, amount],
     });
   };
 
@@ -107,7 +146,7 @@ function TokenCard({ token, chainId }: TokenCardProps) {
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg">
-      <CardHeader className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+      <CardHeader className="from-secondary/20 to-secondary/5 bg-gradient-to-br">
         <div className="flex items-center gap-4">
           {tokenLogoURI && (
             <img src={tokenLogoURI} alt={token.symbol} className="h-12 w-12 rounded-full bg-white p-1" />
@@ -135,6 +174,43 @@ function TokenCard({ token, chainId }: TokenCardProps) {
             Remaining: {formatUnits(faucetBalance || 0n, token.decimals)} {token.symbol}
           </p>
 
+          {isAdmin && (
+            <div className="space-y-2 border-t pt-3">
+              <p className="text-muted-foreground text-xs font-medium">Admin Controls</p>
+              <div className="space-y-2">
+                <input
+                  type="number"
+                  placeholder={`Amount in ${token.symbol}`}
+                  value={adminAmount}
+                  onChange={(e) => setAdminAmount(e.target.value)}
+                  className="w-full rounded border px-2 py-1 text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleDeposit}
+                    disabled={!adminAmount || isPending}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Deposit
+                  </Button>
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={!adminAmount || isPending}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 gap-1"
+                  >
+                    <Minus className="h-3 w-3" />
+                    Withdraw
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {userAddress && (
             <>
               {!canMint && timeRemaining > 0 && (
@@ -154,7 +230,7 @@ function TokenCard({ token, chainId }: TokenCardProps) {
                     disabled={!canMint || isPending}
                     className="w-full gap-2"
                     size="lg"
-                    variant={canMint ? "default" : "secondary"}
+                    variant={canMint ? "secondary" : "default"}
                   >
                     <Droplet className="h-5 w-5" />
                     {isPending ? "Minting..." : "Mint Tokens"}
@@ -175,6 +251,61 @@ function TokenCard({ token, chainId }: TokenCardProps) {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                <svg
+                  className="h-6 w-6 text-green-600 dark:text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <AlertDialogTitle>Tokens minted successfully!</AlertDialogTitle>
+                <AlertDialogDescription>The transaction has been successfully processed.</AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="bg-muted text-muted-foreground my-3 rounded-lg p-1 px-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src={tokenLogoURI} alt={token.symbol} className="h-6 w-6 rounded-full" />
+                <span className="text-xs">{mintedAmount}</span>
+              </div>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  const explorerUrl = chain?.blockExplorers?.default?.url;
+                  if (explorerUrl && transactionHash) {
+                    window.open(`${explorerUrl}tx/${transactionHash}`, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                className="text-muted-foreground gap-2 text-xs"
+              >
+                View on Explorer
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <Button
+              onClick={() => setShowSuccessDialog(false)}
+              className="bg-background w-full border py-5 font-medium shadow-none"
+            >
+              Close
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
@@ -184,7 +315,7 @@ export function FaucetSubPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="space-y-2">
+      <div className="mt-5 space-y-2">
         <h1 className="text-4xl font-bold tracking-tight">Token Faucet</h1>
         <p className="text-muted-foreground">
           Get free testnet tokens for development and testing. Each token has a 24-hour cooldown between mints.
@@ -193,11 +324,11 @@ export function FaucetSubPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {FAUCET_TOKENS.map((token) => (
-          <TokenCard key={token.address} token={token} chainId={chain?.id} />
+          <TokenCard key={token.address} token={token} chainId={chain?.id} chain={chain} />
         ))}
       </div>
 
-      <Card className="bg-blue-50 dark:bg-blue-950">
+      <Card>
         <CardContent className="pt-6">
           <div className="space-y-2">
             <h3 className="font-semibold">How it works</h3>
