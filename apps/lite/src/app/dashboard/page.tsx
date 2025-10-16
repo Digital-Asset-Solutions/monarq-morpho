@@ -1,5 +1,5 @@
 import { Button } from "@morpho-org/uikit/components/shadcn/button";
-import { SidebarInset } from "@morpho-org/uikit/components/shadcn/sidebar";
+import { SidebarInset, SidebarTrigger } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
@@ -88,11 +88,11 @@ export default function Page() {
       <AppSidebar chainId={chain?.id} />
       <SidebarInset className="flex flex-col">
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end border-b px-4 backdrop-blur">
-          {/* <SidebarTrigger className="-ml-1" /> */}
+          <SidebarTrigger className="-ml-1 mr-auto lg:hidden" />
           <div className="mr-2 flex items-center gap-2">
             <Button asChild variant="tertiary" size="lg" className="border p-3 font-light">
               <Link to={`/${selectedChainSlug}/faucet`}>
-                <span className="hidden md:block">Mint Tokens</span>
+                <span>Mint Tokens</span>
               </Link>
             </Button>
             <RewardsButton chainId={chain?.id} />

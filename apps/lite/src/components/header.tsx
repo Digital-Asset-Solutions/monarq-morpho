@@ -8,6 +8,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarSeparator,
+  useSidebar,
 } from "@morpho-org/uikit/components/shadcn/sidebar";
 import { useKeyedState } from "@morpho-org/uikit/hooks/use-keyed-state";
 import { cn } from "@morpho-org/uikit/lib/utils";
@@ -37,6 +38,13 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
   const location = useLocation();
   const currentPath = location.pathname;
   const chainSlug = location.pathname.split("/")[1];
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar>
@@ -65,7 +73,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               isActive={currentPath.includes("/dashboard")}
               className="transition-all duration-200"
             >
-              <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5">
+              <Link to={`/${chainSlug}/dashboard`} className="px-3 py-5" onClick={handleLinkClick}>
                 <Home className="text-secondary h-7 w-7" />
                 <span>Dashboard</span>
               </Link>
@@ -77,7 +85,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               isActive={currentPath.includes("/earn") || currentPath.includes("/vault/")}
               className="transition-all duration-200"
             >
-              <Link to={`/${chainSlug}/earn`} className="px-3 py-5">
+              <Link to={`/${chainSlug}/earn`} className="px-3 py-5" onClick={handleLinkClick}>
                 <CircleDollarSign className="text-secondary h-7 w-7" />
                 <span>Earn</span>
               </Link>
@@ -89,7 +97,7 @@ export function AppSidebar({ chainId }: { chainId?: number }) {
               isActive={currentPath.includes("/borrow") || currentPath.includes("/market/")}
               className="transition-all duration-200"
             >
-              <Link to={`/${chainSlug}/borrow`} className="px-3 py-5">
+              <Link to={`/${chainSlug}/borrow`} className="px-3 py-5" onClick={handleLinkClick}>
                 <LucideHandCoins className="text-secondary h-7 w-7" />
                 <span>Borrow</span>
               </Link>

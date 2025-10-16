@@ -299,7 +299,7 @@ export function BorrowTable({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="size-6" />
+                      <Info className="h-4 w-4" />
                     </TooltipTrigger>
                     <TooltipContent className="text-primary-foreground max-w-56 rounded-3xl p-4 text-xs shadow-2xl">
                       This value will be smaller than that of the full app. It doesn't include{" "}

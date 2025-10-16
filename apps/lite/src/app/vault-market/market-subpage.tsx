@@ -400,6 +400,12 @@ function InteractionSection({
   const maxValue = getMaxValue();
   const isMaxed = inputValue === maxValue;
 
+  // Check if user has enough balance to repay
+  const hasEnoughBalanceToRepay =
+    selectedTab === Actions.Repay
+      ? inputValue !== undefined && balances?.[1] !== undefined && balances[1] >= inputValue
+      : true;
+
   // Transaction configs
   const tokenIndex = [Actions.SupplyCollateral, Actions.WithdrawCollateral].includes(selectedTab) ? 0 : 1;
   const allowance = allowances?.[tokenIndex];
@@ -593,7 +599,7 @@ function InteractionSection({
                 <TransactionButton
                   // @ts-expect-error - Ignore
                   variables={getTxnConfig()}
-                  disabled={!inputValue}
+                  disabled={!inputValue || !hasEnoughBalanceToRepay}
                   onTxnReceipt={() => {
                     setTextInputValue("");
                     void refetchBalances();
