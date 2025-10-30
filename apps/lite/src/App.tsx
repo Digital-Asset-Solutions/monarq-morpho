@@ -6,6 +6,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { ConnectKitProvider } from "connectkit";
 import { ReactNode } from "react";
+import { Toaster } from "sonner";
 import { Client as UrqlClient, Provider as UrqlProvider, fetchExchange } from "urql";
 import { type Config, deserialize, serialize, WagmiProvider } from "wagmi";
 
@@ -60,6 +61,7 @@ function App({ children, wagmiConfig = defaultWagmiConfig }: { children: ReactNo
             <AddressScreeningProvider>
               {children}
               <AddressScreeningModal />
+              <Toaster theme="light" position="bottom-left" richColors />
             </AddressScreeningProvider>
           </UrqlProvider>
         </ConnectKitProvider>

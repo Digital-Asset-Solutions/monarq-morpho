@@ -39,21 +39,33 @@ export function TransactionButton<
   const chains = useChains();
   const chain = extractChain({ chains, id: chainId });
   const { writeContract } = useWriteContract();
-  const { data: txnReceipt } = useWaitForTransactionReceipt({ hash: txnHash, confirmations: 1 });
+  const { data: txnReceipt, error: receiptError } = useWaitForTransactionReceipt({ hash: txnHash, confirmations: 1 });
 
   useEffect(() => {
-    if (txnReceipt === undefined) return;
+    if (txnReceipt === undefined && receiptError === undefined) return;
 
-    console.log(txnReceipt);
-    onTxnReceipt?.(txnReceipt);
+    // Handle receipt (success or reverted)
+    if (txnReceipt) {
+      onTxnReceipt?.(txnReceipt);
 
-    if (txnReceipt.status === "success") {
-      toast.success(`Transaction ${txnHash?.slice(0, 8)} was successful.`, { duration: 10_0000 });
-    } else {
-      toast.error(`Transaction ${txnHash?.slice(0, 8)} reverted.`, { duration: 10_0000 });
+      if (txnReceipt.status === "success") {
+        toast.success(`Transaction ${txnHash?.slice(0, 8)} was successful.`, { duration: 10_0000 });
+      } else {
+        toast.error(`Transaction ${txnHash?.slice(0, 8)} reverted.`, { duration: 10_0000 });
+      }
+      setTxnHash(undefined);
+      return;
     }
-    setTxnHash(undefined);
-  }, [txnReceipt, txnHash, onTxnReceipt]);
+
+    // Handle error (transaction failed/reverted before receipt)
+    if (receiptError) {
+      const errorMessage = receiptError instanceof Error ? receiptError.message : String(receiptError);
+      toast.error(`Transaction ${txnHash?.slice(0, 8)} failed: ${errorMessage.slice(0, 100)}...`, {
+        duration: 10_0000,
+      });
+      setTxnHash(undefined);
+    }
+  }, [txnReceipt, receiptError, txnHash, onTxnReceipt]);
 
   return (
     <Button

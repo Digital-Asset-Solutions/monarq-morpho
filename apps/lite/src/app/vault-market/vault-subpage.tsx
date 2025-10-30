@@ -34,7 +34,8 @@ enum Actions {
 const STALE_TIME = 5 * 60 * 1000;
 
 const STYLE_TAB = "hover:bg-primary rounded-sm x-5 duration-200 ease-in-out cursor-pointer";
-const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
+const STYLE_INPUT_WRAPPER =
+  "bg-[#F9FAFB] border border-[#F2F4F7] flex flex-col rounded-lg p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-start justify-between text-xs font-light";
 
 // Header Section Component
@@ -364,6 +365,7 @@ function InteractionSection({
   vault,
   tokenPriceInUSD,
   rewards,
+  refetchBalanceOf,
 }: {
   vaultAddress: Address;
   asset: Token;
@@ -371,11 +373,13 @@ function InteractionSection({
   vault: AccrualVault;
   tokenPriceInUSD: number;
   rewards: MerklOpportunities;
+  refetchBalanceOf: () => void;
 }) {
   const { address: userAddress } = useAccount();
   const [selectedTab, setSelectedTab] = useState(Actions.Deposit);
   const [textInputValue, setTextInputValue] = useState("");
 
+  const tolerance = 1n;
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: asset.address,
     abi: erc20Abi,
@@ -394,6 +398,7 @@ function InteractionSection({
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
   const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
+
   // Compute user's deposit as asset equivalent of shares; this matches dashboard logic
   // Only compute when we have valid user shares, otherwise show 0
   const currentAssets = userShare && userShare > 0n ? vault.toAssets(userShare) : 0n;
@@ -410,7 +415,21 @@ function InteractionSection({
   const projectedYearlyEarningsUSD =
     parseFloat(projectedAssetBalance) * parseFloat(apyToComputeEarnings) * (tokenPriceInUSD ?? 0);
   const projectedMonthlyEarningsUSD = projectedYearlyEarningsUSD / 12;
-  const isMaxed = inputValue === maxes?.[0];
+
+  // Check if user has enough balance for deposit
+  const hasEnoughBalanceForDeposit =
+    selectedTab === Actions.Deposit
+      ? inputValue !== undefined && inputValue > 0n && maxes?.[2] !== undefined && maxes[2] >= inputValue
+      : true;
+
+  // Check if user has enough balance for withdraw
+  const hasEnoughBalanceForWithdraw =
+    selectedTab === Actions.Withdraw
+      ? inputValue !== undefined &&
+        inputValue > 0n &&
+        maxes?.[0] !== undefined &&
+        (maxes[0] >= inputValue || inputValue - maxes[0] <= tolerance)
+      : true;
 
   const approvalTxnConfig =
     userAddress !== undefined && inputValue !== undefined && allowance !== undefined && allowance < inputValue
@@ -435,21 +454,13 @@ function InteractionSection({
 
   const withdrawTxnConfig =
     userAddress !== undefined && inputValue !== undefined
-      ? isMaxed
-        ? ({
-            address: vaultAddress,
-            abi: erc4626Abi,
-            functionName: "redeem",
-            args: [maxes![1], userAddress, userAddress],
-            dataSuffix: TRANSACTION_DATA_SUFFIX,
-          } as const)
-        : ({
-            address: vaultAddress,
-            abi: erc4626Abi,
-            functionName: "withdraw",
-            args: [inputValue, userAddress, userAddress],
-            dataSuffix: TRANSACTION_DATA_SUFFIX,
-          } as const)
+      ? ({
+          address: vaultAddress,
+          abi: erc4626Abi,
+          functionName: "withdraw",
+          args: [inputValue, userAddress, userAddress],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
       : undefined;
 
   return (
@@ -464,7 +475,7 @@ function InteractionSection({
             setTextInputValue("");
           }}
         >
-          <TabsList className="grid h-fit w-full grid-cols-2 gap-1">
+          <TabsList className="grid h-fit w-full grid-cols-4 gap-1 border border-[#F5F5F] bg-[#FAFAFA]">
             <TabsTrigger className={STYLE_TAB} value={Actions.Deposit}>
               {Actions.Deposit}
             </TabsTrigger>
@@ -493,21 +504,30 @@ function InteractionSection({
             {approvalTxnConfig ? (
               <TransactionButton
                 variables={approvalTxnConfig}
-                disabled={inputValue === 0n}
-                onTxnReceipt={() => refetchAllowance()}
+                disabled={inputValue === 0n || !hasEnoughBalanceForDeposit}
+                onTxnReceipt={() => {
+                  void refetchAllowance();
+                  void refetchMaxes();
+                  void refetchBalanceOf();
+                }}
               >
-                Approve
+                {!hasEnoughBalanceForDeposit && inputValue !== undefined && inputValue > 0n
+                  ? "Insufficient Balance"
+                  : "Approve"}
               </TransactionButton>
             ) : (
               <TransactionButton
                 variables={depositTxnConfig}
-                disabled={!inputValue}
+                disabled={!inputValue || !hasEnoughBalanceForDeposit}
                 onTxnReceipt={() => {
                   setTextInputValue("");
                   void refetchMaxes();
+                  void refetchBalanceOf();
                 }}
               >
-                Deposit
+                {!hasEnoughBalanceForDeposit && inputValue !== undefined && inputValue > 0n
+                  ? "Insufficient Balance"
+                  : "Deposit"}
               </TransactionButton>
             )}
           </TabsContent>
@@ -531,13 +551,16 @@ function InteractionSection({
             </div>
             <TransactionButton
               variables={withdrawTxnConfig}
-              disabled={!inputValue}
+              disabled={!inputValue || !hasEnoughBalanceForWithdraw}
               onTxnReceipt={() => {
                 setTextInputValue("");
                 void refetchMaxes();
+                void refetchBalanceOf();
               }}
             >
-              Withdraw
+              {!hasEnoughBalanceForWithdraw && inputValue !== undefined && inputValue > 0n
+                ? "Insufficient Balance"
+                : "Withdraw"}
             </TransactionButton>
           </TabsContent>
         </Tabs>
@@ -607,7 +630,11 @@ export function VaultSubPage() {
   const { address: vaultAddress } = useParams();
   const { chain } = useOutletContext() as { chain?: Chain };
   const chainId = chain?.id ?? 1;
-  const { vaultsData, vaults, topCurators, userShares } = useVaults({ chainId, staleTime: STALE_TIME, userAddress });
+  const { vaultsData, vaults, topCurators, userShares, refetchBalanceOf } = useVaults({
+    chainId,
+    staleTime: STALE_TIME,
+    userAddress,
+  });
   const currentVaultData = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
   const currentVault = vaults?.find((vault) => vault.address === vaultAddress);
   const tokenAddress = currentVaultData?.vault.asset;
@@ -651,6 +678,7 @@ export function VaultSubPage() {
                 vault={currentVault as AccrualVault}
                 tokenPriceInUSD={tokenPriceInUSD ?? 0}
                 rewards={rewards}
+                refetchBalanceOf={refetchBalanceOf}
               />
             </div>
             <MarketAllocationSection
@@ -670,6 +698,7 @@ export function VaultSubPage() {
               userShare={userShare}
               rewards={rewards}
               vault={currentVault as AccrualVault}
+              refetchBalanceOf={refetchBalanceOf}
             />
           </div>
         </div>

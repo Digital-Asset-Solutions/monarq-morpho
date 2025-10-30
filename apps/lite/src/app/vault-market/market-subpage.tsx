@@ -30,7 +30,8 @@ enum Actions {
 const STALE_TIME = 5 * 60 * 1000;
 
 const STYLE_TAB = "hover:bg-primary rounded-sm px-5 duration-200 ease-in-out cursor-pointer";
-const STYLE_INPUT_WRAPPER = "bg-primary flex flex-col rounded-2xl p-4 transition-colors duration-200 ease-in-out";
+const STYLE_INPUT_WRAPPER =
+  "bg-[#F9FAFB] border border-[#F2F4F7] flex flex-col rounded-lg p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-start justify-between text-xs font-light";
 
 // Header Section Component
@@ -318,6 +319,7 @@ function InteractionSection({
   position,
   collateralTokenPriceInUSD,
   loanTokenPriceInUSD,
+  refetchPosition,
 }: {
   marketParams: Market["params"];
   market: Market;
@@ -326,6 +328,7 @@ function InteractionSection({
   position?: AccrualPosition;
   collateralTokenPriceInUSD: number;
   loanTokenPriceInUSD: number;
+  refetchPosition: () => void;
 }) {
   const { address: userAddress } = useAccount();
   const { chain } = useOutletContext() as { chain?: Chain };
@@ -398,22 +401,58 @@ function InteractionSection({
   };
 
   const maxValue = getMaxValue();
-  const isMaxed = inputValue === maxValue;
 
-  // Check if user has enough balance to repay
-  const hasEnoughBalanceToRepay =
-    selectedTab === Actions.Repay
-      ? inputValue !== undefined && balances?.[1] !== undefined && balances[1] >= inputValue
-      : true;
+  const repayMaxAssets = position?.borrowAssets;
+  const repayShares = position?.borrowShares;
+  const isRepayMax =
+    selectedTab === Actions.Repay &&
+    inputValue !== undefined &&
+    repayMaxAssets !== undefined &&
+    inputValue >= repayMaxAssets;
+
+  // Check if user has enough balance for the current action
+  const hasEnoughBalance = useMemo(() => {
+    if (!inputValue) return false;
+
+    switch (selectedTab) {
+      case Actions.SupplyCollateral:
+        return balances?.[0] !== undefined && balances[0] >= inputValue;
+      case Actions.WithdrawCollateral:
+        return position?.withdrawableCollateral !== undefined && position.withdrawableCollateral >= inputValue;
+      case Actions.Borrow:
+        return position?.maxBorrowableAssets !== undefined && position.maxBorrowableAssets >= inputValue;
+      case Actions.Repay:
+        return (
+          balances?.[1] !== undefined &&
+          balances[1] >= inputValue &&
+          position?.borrowAssets !== undefined &&
+          inputValue <= position.borrowAssets
+        );
+      default:
+        return true;
+    }
+  }, [inputValue, selectedTab, balances, position]);
 
   // Transaction configs
-  const tokenIndex = [Actions.SupplyCollateral, Actions.WithdrawCollateral].includes(selectedTab) ? 0 : 1;
-  const allowance = allowances?.[tokenIndex];
+  // Only need approval for actions that spend tokens:
+  // - Supply Collateral: need approval for collateral token
+  // - Repay: need approval for loan token
+  // - Withdraw Collateral: no approval needed (withdrawing owned collateral)
+  // - Borrow: no approval needed (receiving tokens, not spending)
+  const needsApproval = selectedTab === Actions.SupplyCollateral || selectedTab === Actions.Repay;
+
+  const approvalTokenIndex = selectedTab === Actions.SupplyCollateral ? 0 : 1;
+  const allowance = allowances?.[approvalTokenIndex];
+  const approvalToken = selectedTab === Actions.SupplyCollateral ? collateralToken : loanToken;
 
   const approvalTxnConfig =
-    userAddress !== undefined && inputValue !== undefined && allowance !== undefined && allowance < inputValue
+    needsApproval &&
+    userAddress !== undefined &&
+    inputValue !== undefined &&
+    allowance !== undefined &&
+    allowance < inputValue
       ? ({
-          address: currentToken.address,
+          address: approvalToken.address,
           abi: erc20Abi,
           functionName: "approve",
           args: [morpho?.address ?? "0x", inputValue],
@@ -455,12 +494,12 @@ function InteractionSection({
 
   const repayTxnConfig =
     selectedTab === Actions.Repay && userAddress !== undefined && inputValue !== undefined
-      ? isMaxed
+      ? isRepayMax && repayShares !== undefined
         ? ({
             address: morpho?.address ?? "0x",
             abi: morphoAbi,
             functionName: "repay",
-            args: [marketParams, 0n, inputValue, userAddress, "0x"],
+            args: [marketParams, 0n, repayShares, userAddress, "0x"],
             dataSuffix: TRANSACTION_DATA_SUFFIX,
           } as const)
         : ({
@@ -547,7 +586,7 @@ function InteractionSection({
             setTextInputValue("");
           }}
         >
-          <TabsList className="grid h-fit w-full grid-cols-4 gap-1">
+          <TabsList className="grid h-fit w-full grid-cols-4 gap-1 border border-[#F5F5F] bg-[#FAFAFA]">
             <TabsTrigger className={STYLE_TAB} value={Actions.SupplyCollateral}>
               Supply
             </TabsTrigger>
@@ -590,22 +629,29 @@ function InteractionSection({
               {approvalTxnConfig ? (
                 <TransactionButton
                   variables={approvalTxnConfig}
-                  disabled={inputValue === 0n}
-                  onTxnReceipt={() => refetchAllowances()}
+                  disabled={inputValue === 0n || !hasEnoughBalance}
+                  onTxnReceipt={() => {
+                    void refetchAllowances();
+                    void refetchBalances();
+                    void refetchPosition();
+                  }}
                 >
-                  Approve
+                  {!hasEnoughBalance && inputValue !== undefined && inputValue > 0n
+                    ? "Insufficient Balance"
+                    : "Approve"}
                 </TransactionButton>
               ) : (
                 <TransactionButton
                   // @ts-expect-error - Ignore
                   variables={getTxnConfig()}
-                  disabled={!inputValue || !hasEnoughBalanceToRepay}
+                  disabled={!inputValue || !hasEnoughBalance}
                   onTxnReceipt={() => {
                     setTextInputValue("");
                     void refetchBalances();
+                    void refetchPosition();
                   }}
                 >
-                  {action}
+                  {!hasEnoughBalance && inputValue !== undefined && inputValue > 0n ? "Insufficient Balance" : action}
                 </TransactionButton>
               )}
             </TabsContent>
@@ -761,7 +807,7 @@ export function MarketSubPage() {
 
   // Get user position for this market
   const morpho = useMemo(() => getContractDeploymentInfo(chainId, "Morpho"), [chainId]);
-  const { data: positionRaw } = useReadContract({
+  const { data: positionRaw, refetch: refetchPosition } = useReadContract({
     address: morpho?.address,
     abi: morphoAbi,
     functionName: "position",
@@ -830,6 +876,7 @@ export function MarketSubPage() {
                 position={position}
                 collateralTokenPriceInUSD={collateralTokenPriceInUSD ?? 0}
                 loanTokenPriceInUSD={loanTokenPriceInUSD ?? 0}
+                refetchPosition={refetchPosition}
               />
             </div>
             <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} />
@@ -844,6 +891,7 @@ export function MarketSubPage() {
               position={position}
               collateralTokenPriceInUSD={collateralTokenPriceInUSD ?? 0}
               loanTokenPriceInUSD={loanTokenPriceInUSD ?? 0}
+              refetchPosition={refetchPosition}
             />
           </div>
         </div>
