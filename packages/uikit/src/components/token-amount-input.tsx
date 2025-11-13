@@ -55,14 +55,14 @@ export function TokenAmountInput({
           </p>
         ) : (
           <p className="text-muted-foreground text-right text-xs font-light">
-            {/* eslint-disable-next-line */}
+            {}
             $0.00
           </p>
         )}
 
         {textMaxValue && (
           <p className="text-muted-foreground ml-auto text-right text-xs font-light">
-            {/* eslint-disable-next-line */}
+            {}
             {textMaxValue} {symbol ?? ""}{" "}
             <span className="text-morpho-brand cursor-pointer font-bold" onClick={() => onChange(textMaxValue)}>
               Max.

@@ -342,7 +342,7 @@ export function DashboardSubPage() {
             <div className="flex items-center justify-start gap-2 p-4">
               <h2 className="text-xl">Earn</h2>
               <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-                {userRows.length} positions / $0.00
+                {userRows.length} {userRows.length <= 1 ? "position" : "positions"} / $0.00
               </span>
             </div>
             {userRows.length > 0 ? (
@@ -368,7 +368,7 @@ export function DashboardSubPage() {
             <div className="flex items-center justify-start gap-2 p-4">
               <h2 className="text-xl">Borrow</h2>
               <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-                {userBorrowMarkets.length} positions / $0.00
+                {userBorrowMarkets.length} {userBorrowMarkets.length <= 1 ? "position" : "positions"} / $0.00
               </span>
             </div>
             {userBorrowMarkets.length > 0 ? (

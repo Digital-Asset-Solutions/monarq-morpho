@@ -475,7 +475,7 @@ function InteractionSection({
             setTextInputValue("");
           }}
         >
-          <TabsList className="grid h-fit w-full grid-cols-4 gap-1 border border-[#F5F5F] bg-[#FAFAFA]">
+          <TabsList className="grid h-fit w-full grid-cols-2 gap-1 border border-[#F5F5F] bg-[#FAFAFA]">
             <TabsTrigger className={STYLE_TAB} value={Actions.Deposit}>
               {Actions.Deposit}
             </TabsTrigger>
@@ -535,7 +535,7 @@ function InteractionSection({
             <div className={STYLE_INPUT_WRAPPER}>
               <div className={STYLE_INPUT_HEADER}>
                 <span className="mt-1">Your Withdrawal</span>
-                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 font-bold">
+                <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 text-[14px] font-bold">
                   <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
                   {asset.symbol ?? ""}
                 </span>
