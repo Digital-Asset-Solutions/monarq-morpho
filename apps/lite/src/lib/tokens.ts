@@ -13,6 +13,8 @@ type TokenList = {
   tokens: { name: string; symbol: string; decimals: number; chainId: number; address: Address; logoURI: string }[];
 };
 
+const tokenUriDebugSeen = new Set<string>();
+
 export function getTokenURI(
   token: { symbol?: string; address: Address; chainId?: number },
   tokenLists: { [chainId: number]: TokenList[] } = {
@@ -20,16 +22,76 @@ export function getTokenURI(
     [eden.id]: [edenTokenList],
   },
 ) {
+  const lowerAddress = token.address.toLowerCase();
+  const debugKey = `${token.chainId ?? "no-chain"}:${lowerAddress}:${token.symbol ?? "no-symbol"}`;
+  const shouldDebug =
+    typeof window !== "undefined" && window.location.hostname === "localhost" && !tokenUriDebugSeen.has(debugKey);
+
+  if (shouldDebug) tokenUriDebugSeen.add(debugKey);
+
   if (token.chainId !== undefined) {
-    const match = tokenLists[token.chainId]
+    const chainMatch = tokenLists[token.chainId]
       ?.map((tokenList) => tokenList.tokens)
       .flat()
-      .find((candidate) => candidate.address === token.address && candidate.chainId === token.chainId)?.logoURI;
+      .find((candidate) => candidate.address.toLowerCase() === lowerAddress && candidate.chainId === token.chainId);
+    const match = chainMatch?.logoURI;
+
+    if (shouldDebug) {
+      console.debug("[token-uri][chain-match]", {
+        chainId: token.chainId,
+        symbol: token.symbol,
+        address: token.address,
+        matchedToken: chainMatch
+          ? {
+              symbol: chainMatch.symbol,
+              address: chainMatch.address,
+              chainId: chainMatch.chainId,
+            }
+          : null,
+        logoURI: match ?? null,
+      });
+    }
 
     if (match) return match;
   }
 
-  return token.symbol ? getTokenSymbolURIFromCdn(token.symbol) : undefined;
+  // Fallback: match by address across all configured token lists.
+  const crossChainCandidate = Object.values(tokenLists)
+    .flat()
+    .flatMap((tokenList) => tokenList.tokens)
+    .find((candidate) => candidate.address.toLowerCase() === lowerAddress);
+  const crossChainMatch = crossChainCandidate?.logoURI;
+
+  if (shouldDebug) {
+    console.debug("[token-uri][cross-chain-fallback]", {
+      chainId: token.chainId,
+      symbol: token.symbol,
+      address: token.address,
+      matchedToken: crossChainCandidate
+        ? {
+            symbol: crossChainCandidate.symbol,
+            address: crossChainCandidate.address,
+            chainId: crossChainCandidate.chainId,
+          }
+        : null,
+      logoURI: crossChainMatch ?? null,
+    });
+  }
+
+  if (crossChainMatch) return crossChainMatch;
+
+  const symbolFallback = token.symbol ? getTokenSymbolURIFromCdn(token.symbol) : undefined;
+
+  if (shouldDebug) {
+    console.debug("[token-uri][symbol-fallback]", {
+      chainId: token.chainId,
+      symbol: token.symbol,
+      address: token.address,
+      logoURI: symbolFallback ?? null,
+    });
+  }
+
+  return symbolFallback;
 }
 
 const plumeTokenList: TokenList = {

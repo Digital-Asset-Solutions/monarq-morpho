@@ -13,9 +13,31 @@ function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimi
   );
 }
 
-function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+function AvatarImage({
+  className,
+  onLoadingStatusChange,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
   return (
-    <AvatarPrimitive.Image data-slot="avatar-image" className={cn("aspect-square size-full", className)} {...props} />
+    <AvatarPrimitive.Image
+      data-slot="avatar-image"
+      className={cn("aspect-square size-full", className)}
+      {...props}
+      onLoadingStatusChange={(status) => {
+        onLoadingStatusChange?.(status);
+        if (
+          status === "error" &&
+          typeof window !== "undefined" &&
+          window.location.hostname === "localhost" &&
+          typeof props.src === "string"
+        ) {
+          console.debug("[avatar-image][error]", {
+            src: props.src,
+            alt: props.alt,
+          });
+        }
+      }}
+    />
   );
 }
 

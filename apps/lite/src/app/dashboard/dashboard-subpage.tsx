@@ -18,7 +18,7 @@ import { getChainSlug, Token } from "@morpho-org/uikit/lib/utils";
 import { Search } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Link, useOutletContext } from "react-router";
-import { Address, Chain, erc20Abi, zeroAddress, type Hex } from "viem";
+import { Address, Chain, erc20Abi, erc4626Abi, zeroAddress, type Hex } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
 import { BorrowPositionTable } from "@/components/borrow-table";
@@ -29,6 +29,7 @@ import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
 import { VAULT_BLACKLIST } from "@/lib/constants";
 import { getDisplayableCurators } from "@/lib/curators";
+import { getSeededVaults } from "@/lib/eden-vaults";
 import { getTokenURI } from "@/lib/tokens";
 
 const restructure = (position: readonly [bigint, bigint, bigint]) => ({
@@ -52,9 +53,17 @@ export function DashboardSubPage() {
     ],
     [chainId],
   );
+  const factoryAddresses = useMemo(() => {
+    const addresses = [factoryV1_1?.address, factory?.address].filter(Boolean) as Address[];
+    if (addresses.length === 0) return undefined;
+    return addresses.length === 1 ? addresses[0] : addresses;
+  }, [factoryV1_1?.address, factory?.address]);
+  const factoriesFromBlock = factory?.fromBlock ?? factoryV1_1?.fromBlock;
 
   const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
   const borrowingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.BORROW, userAddress });
+  const seededVaults = useMemo(() => getSeededVaults(chainId), [chainId]);
+  const seededVaultAddresses = useMemo(() => seededVaults.map((vault) => vault.address), [seededVaults]);
 
   // MARK: Index `MetaMorphoFactory.CreateMetaMorpho` on all factory versions to get a list of all vault addresses
   const {
@@ -63,12 +72,12 @@ export function DashboardSubPage() {
   } = useContractEvents({
     chainId,
     abi: metaMorphoFactoryAbi,
-    address: factoryV1_1 ? [factoryV1_1.address].concat(factory ? [factory.address] : []) : [],
-    fromBlock: factory?.fromBlock ?? factoryV1_1?.fromBlock,
+    address: factoryAddresses,
+    fromBlock: factoriesFromBlock,
     reverseChronologicalOrder: true,
     eventName: "CreateMetaMorpho",
     strict: true,
-    query: { enabled: chainId !== undefined },
+    query: { enabled: chainId !== undefined && factoryAddresses !== undefined && factoriesFromBlock !== undefined },
   });
 
   // MARK: Fetch additional data for vaults owned by the top 1000 curators from core deployments
@@ -173,7 +182,10 @@ export function DashboardSubPage() {
   // MARK: Fetch metadata for every ERC20 asset (including market tokens)
   const tokenAddresses = useMemo(() => {
     const tokenAddressesSet = new Set(
-      vaults.map((vault) => [vault.asset, ...vault.collateralAllocations.keys()]).flat(),
+      [
+        ...vaults.map((vault) => [vault.asset, ...vault.collateralAllocations.keys()]).flat(),
+        ...seededVaults.map((vault) => vault.asset),
+      ].flat(),
     );
 
     // Add all market tokens (loan and collateral tokens)
@@ -186,7 +198,7 @@ export function DashboardSubPage() {
     const tokenAddresses = [...tokenAddressesSet];
     tokenAddresses.sort(); // sort so that any query keys derived from this don't change
     return tokenAddresses;
-  }, [vaults, markets]);
+  }, [vaults, markets, seededVaults]);
 
   const { data: tokenData } = useReadContracts({
     contracts: tokenAddresses
@@ -214,6 +226,34 @@ export function DashboardSubPage() {
     return tokens;
   }, [tokenAddresses, tokenData, chainId]);
 
+  const { data: seededVaultData } = useReadContracts({
+    contracts: seededVaultAddresses
+      .map((address) => [
+        { chainId, address, abi: erc20Abi, functionName: "name" } as const,
+        { chainId, address, abi: erc4626Abi, functionName: "totalAssets" } as const,
+        { chainId, address, abi: erc20Abi, functionName: "balanceOf", args: userAddress && [userAddress] } as const,
+      ])
+      .flat(),
+    allowFailure: true,
+    query: {
+      enabled: seededVaultAddresses.length > 0,
+      staleTime: STALE_TIME,
+      gcTime: Infinity,
+    },
+  });
+
+  const seededVaultSnapshots = useMemo(() => {
+    const snapshots = new Map<Address, { name?: string; totalAssets?: bigint; userShares?: bigint }>();
+    seededVaultAddresses.forEach((address, idx) => {
+      snapshots.set(address, {
+        name: seededVaultData?.[idx * 3 + 0].result as string | undefined,
+        totalAssets: seededVaultData?.[idx * 3 + 1].result as bigint | undefined,
+        userShares: seededVaultData?.[idx * 3 + 2].result as bigint | undefined,
+      });
+    });
+    return snapshots;
+  }, [seededVaultAddresses, seededVaultData]);
+
   // MARK: Fetch user's balance in each vault
   const { data: balanceOfData } = useReadContracts({
     contracts: vaultsData?.map(
@@ -240,7 +280,7 @@ export function DashboardSubPage() {
   ) as { [vault: Address]: bigint | undefined };
 
   const rows = useMemo(() => {
-    return vaults.map((vault) => {
+    const indexedRows = vaults.map((vault) => {
       const { decimals, symbol } = tokens.get(vault.asset) ?? { decimals: undefined, symbol: undefined };
 
       return {
@@ -256,7 +296,43 @@ export function DashboardSubPage() {
         imageSrc: getTokenURI({ symbol, address: vault.asset, chainId }),
       };
     });
-  }, [vaults, tokens, userShares, topCurators, chainId]);
+    const indexedVaultSet = new Set(indexedRows.map((row) => row.vault.address.toLowerCase()));
+    const seededRows = seededVaults
+      .filter((seededVault) => !indexedVaultSet.has(seededVault.address.toLowerCase()))
+      .map((seededVault) => {
+        const snapshot = seededVaultSnapshots.get(seededVault.address);
+        const { decimals, symbol } = tokens.get(seededVault.asset) ?? { decimals: undefined, symbol: undefined };
+
+        const seededVaultLike = {
+          address: seededVault.address,
+          name: snapshot?.name || seededVault.name,
+          owner: seededVault.owner,
+          timelock: 0n,
+          totalAssets: snapshot?.totalAssets ?? 0n,
+          apy: 0n,
+          fee: 0n,
+          allocations: new Map(),
+          collateralAllocations: new Map(),
+          toAssets: (shares: bigint) => shares,
+          getAllocationProportion: () => 0n,
+        };
+
+        return {
+          vault: seededVaultLike,
+          asset: {
+            address: seededVault.asset,
+            imageSrc: getTokenURI({ symbol, address: seededVault.asset, chainId }),
+            symbol,
+            decimals,
+          } as Token,
+          curators: {},
+          userShares: snapshot?.userShares,
+          imageSrc: getTokenURI({ symbol, address: seededVault.asset, chainId }),
+          badgeLabel: "V2",
+        };
+      });
+    return [...indexedRows, ...seededRows];
+  }, [vaults, tokens, userShares, topCurators, chainId, seededVaults, seededVaultSnapshots]);
 
   // Filter rows to only show vaults where user has actual positions
   const userRows = useMemo(() => {

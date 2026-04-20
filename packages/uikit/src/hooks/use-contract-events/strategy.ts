@@ -29,13 +29,14 @@ export type AnnotatedTransport = EIP1193Transport & {
 //       opting not to implement them for now.
 export type Strategy = AnnotatedTransport[];
 
-const BLOCK_BINS = [1n, 1_000n, 2_000n, 5_000n, 10_000n, "unconstrained" as const];
+const BLOCK_BINS = [1n, 1_000n, 2_000n, 5_000n, 10_000n, 100_000n, "unconstrained" as const];
 const ORDINARY_RETRIES = 4; // Num of `eth_getLogs` retries in bins that have succeeded before
 const EXPLORATORY_RETRIES = 1; // Num of `eth_getLogs` retries in untested bins
 const ORDINARY_RETRY_DELAY = 50; // Delay to pass to viem if retrying in bins that have have succeeded before (ms)
 const EXPLORATORY_RETRY_DELAY = 50; // Delay to pass to viem if retrying in untested bins (ms)
 const LOOKBACK_WINDOW = 30_000; // How far into the past to look when computing stats (ms)
 const ALPHA = 0.8; // EMA decay constant (should be between 0 and 1)
+const MIN_REQUEST_TIMEOUT = 5_000; // Lower bound for eth_getLogs timeout (ms)
 
 function ema(x: number, update: number, alpha: number) {
   return alpha * x + (1 - alpha) * update;
@@ -52,6 +53,9 @@ function supportsNumBlocks(transportId: string, numBlocks: bigint | "unconstrain
     transportId.includes("lava.build")
   ) {
     return numBlocks !== "unconstrained" && numBlocks <= 10_000n;
+  }
+  if (transportId.includes("rpc.eden.gateway.fm")) {
+    return numBlocks !== "unconstrained" && numBlocks <= 100_000n;
   }
   if (transportId.includes("rpc.tac.build")) {
     return numBlocks !== "unconstrained" && numBlocks <= 2_000n;
@@ -156,7 +160,7 @@ export function getStrategyBasedOn<Transport extends EIP1193Transport>(
         retryDelay = ORDINARY_RETRY_DELAY;
       }
 
-      const timeout = latency ? latency * 10 : ping * 20;
+      const timeout = Math.max(latency ? latency * 10 : ping * 20, MIN_REQUEST_TIMEOUT);
       const c = 0.75; // UCB coefficient (1.0 is standard, lower means less exploration)
       const k = (maxNumBlocks === "unconstrained" ? 1_000_000 : Number(maxNumBlocks)) / timeout; // UCB scaler
       const ucbValue = k * c * Math.sqrt(Math.log(totalRequestCount) / (successes + failures));

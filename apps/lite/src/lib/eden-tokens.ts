@@ -14,6 +14,22 @@ export const edenTokenList = {
   },
   tokens: [
     {
+      name: "TIA",
+      symbol: "TIA",
+      decimals: 18,
+      chainId: eden.id,
+      address: "0x0000000000000000000000000000000000000000" as Address,
+      logoURI: "https://assets.coingecko.com/coins/images/31967/standard/tia.jpg",
+    },
+    {
+      name: "Wrapped TIA",
+      symbol: "WTIA",
+      decimals: 18,
+      chainId: eden.id,
+      address: "0x00000000000000000000000000000000ce1E571a" as Address,
+      logoURI: "https://assets.coingecko.com/coins/images/31967/standard/tia.jpg",
+    },
+    {
       name: "Ether",
       symbol: "ETH",
       decimals: 18,
@@ -35,7 +51,7 @@ export const edenTokenList = {
       decimals: 18,
       chainId: eden.id,
       address: "0xF4e644772b17b6c57327F4D111a73D68C8cC731B" as Address,
-      logoURI: "https://via.placeholder.com/32x32/2563eb/ffffff?text=e",
+      logoURI: "https://assets.coingecko.com/coins/images/6319/standard/usdc.png",
     },
     {
       name: "BTC",

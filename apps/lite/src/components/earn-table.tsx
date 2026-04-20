@@ -1,4 +1,4 @@
-import { AccrualVault } from "@morpho-org/blue-sdk";
+import { type MarketId } from "@morpho-org/blue-sdk";
 import { AvatarStack } from "@morpho-org/uikit/components/avatar-stack";
 import { AvatarImage, AvatarFallback, Avatar } from "@morpho-org/uikit/components/shadcn/avatar";
 import {
@@ -35,12 +35,27 @@ import { MIN_TIMELOCK } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
 import { getTokenURI } from "@/lib/tokens";
 
+export type EarnVaultLike = {
+  address: Address;
+  name: string;
+  owner: Address;
+  timelock: bigint;
+  totalAssets: bigint;
+  apy: bigint;
+  fee: bigint;
+  allocations: Map<MarketId, unknown>;
+  collateralAllocations: Map<Address, { proportion: bigint; lltvs: Set<bigint>; oracles: Set<Address> }>;
+  toAssets: (shares: bigint) => bigint;
+  getAllocationProportion: (marketId: MarketId) => bigint;
+};
+
 export type Row = {
-  vault: AccrualVault;
+  vault: EarnVaultLike;
   asset: Token;
   curators: DisplayableCurators;
   userShares: bigint | undefined;
   imageSrc?: string;
+  badgeLabel?: string;
 };
 
 function VaultTableCell({
@@ -49,7 +64,8 @@ function VaultTableCell({
   imageSrc,
   chain,
   timelock,
-}: Token & { chain: Chain | undefined; timelock: bigint }) {
+  badgeLabel,
+}: Token & { chain: Chain | undefined; timelock: bigint; badgeLabel?: string }) {
   return (
     <TooltipProvider>
       <Tooltip>
@@ -62,6 +78,11 @@ function VaultTableCell({
               </AvatarFallback>
             </Avatar>
             {symbol ?? "－"}
+            {badgeLabel && (
+              <span className="bg-secondary text-secondary-foreground rounded px-1.5 py-0.5 text-[10px] font-medium">
+                {badgeLabel}
+              </span>
+            )}
             {timelock < MIN_TIMELOCK && (
               <ClockAlert height={16} width={16} className="text-morpho-error duration-750 animate-pulse" />
             )}
@@ -373,6 +394,7 @@ export function EarnTable({
                       imageSrc={row.imageSrc}
                       chain={chain}
                       timelock={row.vault.timelock}
+                      badgeLabel={row.badgeLabel}
                     />
                   </TableCell>
                   <TableCell>

@@ -32,7 +32,10 @@ export function getQueryFn<
       abi,
       eventName
     >);
-    const address = (queryKey[2] as { address?: Address | Address[] }).address;
+    const rawAddress = (queryKey[2] as { address?: Address | Address[] }).address;
+    // Some RPC providers reject `eth_getLogs` when `address` is an array of length 1.
+    // Normalize this case to a single address to avoid infinite retry loops.
+    const address = Array.isArray(rawAddress) && rawAddress.length === 1 ? rawAddress[0] : rawAddress;
     const fromBlock = queryKey[3] as bigint;
     const { strategy, toBlockMax, finalizedBlock } = meta as {
       strategy: Strategy;
