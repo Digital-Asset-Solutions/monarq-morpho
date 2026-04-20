@@ -92,7 +92,8 @@ export function useTokenPrices(
 
       const networkSlug = CHAIN_ID_TO_NETWORK_MAP[chainId];
       if (!networkSlug) {
-        throw new Error(`Unsupported chain ID: ${chainId}`);
+        console.warn(`Unsupported chain ID for pricing: ${chainId}`);
+        return {};
       }
 
       return getTokenPriceByChainAndContract(networkSlug, addresses);

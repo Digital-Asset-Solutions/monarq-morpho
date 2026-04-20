@@ -1,9 +1,8 @@
-// LITE APP: Only essential imports for Lisk and Eden
+// LITE APP: Eden-only chain support
 import * as customChains from "@morpho-org/uikit/lib/chains";
 import { getDefaultConfig as createConnectKitConfigParams } from "connectkit";
 import type { Chain, HttpTransportConfig } from "viem";
 import { CreateConnectorFn, createConfig as createWagmiConfig, fallback, http, type Transport } from "wagmi";
-import { lisk } from "wagmi/chains";
 
 /* ORIGINAL IMPORTS - commented for rollback
 import * as customChains from "@morpho-org/uikit/lib/chains";
@@ -64,7 +63,7 @@ function createAlchemyHttp(slug: string): ({ url: string } & HttpTransportConfig
 }
 */
 
-// LITE APP: Lisk and Eden chains supported
+// LITE APP: Eden chain supported
 const chains = [customChains.eden] as const;
 
 /* ORIGINAL CHAINS CONFIG - commented for rollback
@@ -92,11 +91,10 @@ const chains = [
 ] as const;
 */
 
-// LITE APP: Lisk and Eden transports needed
+// LITE APP: Eden transport
 const transports: { [K in (typeof chains)[number]["id"]]: Transport } & { [k: number]: Transport } = {
-  [lisk.id]: createFallbackTransport(lisk.rpcUrls.default.http.map((url) => ({ url, batch: false }))),
   [customChains.eden.id]: createFallbackTransport(
-    customChains.eden.rpcUrls.default.http.map((url) => ({ url, batch: false })),
+    customChains.eden.rpcUrls.default.http.map((url: string) => ({ url, batch: false })),
   ),
 };
 

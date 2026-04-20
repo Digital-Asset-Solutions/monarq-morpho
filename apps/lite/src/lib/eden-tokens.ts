@@ -1,11 +1,12 @@
 import { Address } from "viem";
+import { eden } from "viem/chains";
 
-// Eden testnet token list
+// Eden mainnet token list
 export const edenTokenList = {
-  name: "Eden Testnet Token List",
+  name: "Eden Mainnet Token List",
   logoURI: "https://via.placeholder.com/32x32/4ade80/ffffff?text=E",
   timestamp: new Date().toISOString(),
-  keywords: ["eden", "testnet", "defi"],
+  keywords: ["eden", "mainnet", "defi"],
   version: {
     major: 1,
     minor: 0,
@@ -13,58 +14,42 @@ export const edenTokenList = {
   },
   tokens: [
     {
-      name: "Ethereum",
+      name: "Ether",
       symbol: "ETH",
       decimals: 18,
-      chainId: 3735928814,
-      address: "0x0000000000000000000000000000000000000000" as Address,
+      chainId: eden.id,
+      address: "0x23958cBa555AC52C9495Df9b121ff73003e39dBb" as Address,
       logoURI: "https://resources.cryptocompare.com/asset-management/2/1724756690647.png",
     },
     {
-      name: "Mock Asset",
-      symbol: "MOCK",
+      name: "SOL",
+      symbol: "SOL",
+      decimals: 9,
+      chainId: eden.id,
+      address: "0x16eD50F96ea655Cb03638d7054e62e42Afb7b4fA" as Address,
+      logoURI: "https://assets.coingecko.com/coins/images/4128/standard/solana.png",
+    },
+    {
+      name: "eUSD",
+      symbol: "eUSD",
       decimals: 18,
-      chainId: 3735928814,
-      address: "0x8fe895Fb093801B0a7c9399c95Ec8322110AF69c" as Address,
-      logoURI: "https://resources.cryptocompare.com/asset-management/2/1724756690647.png",
+      chainId: eden.id,
+      address: "0xF4e644772b17b6c57327F4D111a73D68C8cC731B" as Address,
+      logoURI: "https://via.placeholder.com/32x32/2563eb/ffffff?text=e",
     },
     {
-      name: "WETH Collateral",
-      symbol: "WETH-COLL",
-      decimals: 18,
-      chainId: 3735928814,
-      address: "0x6cE373b8ed0fF1c68B67d88E44076Aa2C480Fd2f" as Address,
-      logoURI: "https://resources.cryptocompare.com/asset-management/306/1722510537709.png",
-    },
-    {
-      name: "USDC Collateral",
-      symbol: "USDC-COLL",
-      decimals: 6,
-      chainId: 3735928814,
-      address: "0x05B95F576aC62005BC7bDaA3c1a25b720377973E" as Address,
-      logoURI: "https://resources.cryptocompare.com/asset-management/14/1728310128919.png",
-    },
-    {
-      name: "EDEN WETH",
-      symbol: "EDEN-WETH",
-      decimals: 18,
-      chainId: 3735928814,
-      address: "0xbA207113AAFbd1805786a953177eCdE780e5BbAB" as Address,
-      logoURI: "https://resources.cryptocompare.com/asset-management/306/1722510537709.png",
-    },
-    {
-      name: "EDEN USDC",
-      symbol: "EDEN-USDC",
-      decimals: 6,
-      chainId: 3735928814,
-      address: "0xF8e5aD1507f6b7e1637b4d20c115b470D48C582E" as Address,
-      logoURI: "https://resources.cryptocompare.com/asset-management/14/1728310128919.png",
+      name: "BTC",
+      symbol: "BTC",
+      decimals: 8,
+      chainId: eden.id,
+      address: "0xFA3198ecF05303a6d96E57a45E6c815055D255b1" as Address,
+      logoURI: "https://assets.coingecko.com/coins/images/1/standard/bitcoin.png",
     },
   ],
 };
 
 export function getEdenTokenURI(token: { symbol?: string; address: Address; chainId?: number }) {
-  if (token.chainId === 3735928814) {
+  if (token.chainId === eden.id) {
     const match = edenTokenList.tokens.find(
       (t) => t.address.toLowerCase() === token.address.toLowerCase() && t.chainId === token.chainId,
     )?.logoURI;
