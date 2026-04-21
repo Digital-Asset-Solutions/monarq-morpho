@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/comp
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
 import {
+  abbreviateAddress,
   computeNetApy,
   formatApy,
   formatBalanceWithSymbol,
@@ -191,19 +192,161 @@ function StatsGrid({
   );
 }
 
-// About Section Component
-// function AboutSection() {
-//   return (
-//     <div className="mb-8">
-//       <h2 className="text-lg font-semibold">About the Vault</h2>
-//       <p className="text-muted-foreground text-sm leading-relaxed">
-//         Stake your $USDp and start raking in some chill passive earnings with $sUSDp!Stake your $USDp and start raking
-//         in some chill passive earnings with $sUSDp!Stake your $USDp and start raking in some chill passive earnings with
-//         $sUSDp!
-//       </p>
-//     </div>
-//   );
-// }
+function AboutSection({ description }: { description?: string }) {
+  return (
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold">About the Vault</h2>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {description ??
+          "Deposit the vault asset to earn yield through Monarq allocations. Withdrawals depend on available market liquidity."}
+      </p>
+    </div>
+  );
+}
+
+function SeededStatsGrid({
+  totalSupply,
+  totalAssets,
+  userShares,
+  decimals,
+  tokenPriceInUSD,
+}: {
+  totalSupply: bigint;
+  totalAssets: bigint;
+  userShares: bigint;
+  decimals: number;
+  tokenPriceInUSD: number;
+}) {
+  const totalDeposits = Number(formatUnits(totalSupply, decimals)) * tokenPriceInUSD;
+  const liquidity = Number(formatUnits(totalAssets, decimals)) * tokenPriceInUSD;
+  const yourDeposit = Number(formatUnits(userShares, decimals)) * tokenPriceInUSD;
+
+  return (
+    <div className="mb-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Total Deposits</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: totalDeposits, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Liquidity</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: liquidity, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">APY</p>
+        <p className="text-2xl font-semibold">—</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Your Deposit</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: yourDeposit, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SeededVaultDetailsGrid({
+  asset,
+  owner,
+  curators,
+}: {
+  asset: Token;
+  owner: Address;
+  curators: DisplayableCurators;
+}) {
+  const primaryCurator = Object.values(curators)[0];
+
+  return (
+    <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Vault Token</p>
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full">
+            <span className="text-xs text-white">
+              <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6 rounded-full" />
+            </span>
+          </div>
+          <span className="font-semibold">{asset.symbol}</span>
+        </div>
+      </div>
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Performance Fee</p>
+        <p className="font-semibold">0%</p>
+      </div>
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Curator</p>
+        {primaryCurator ? (
+          <div className="flex items-center gap-2">
+            {primaryCurator.imageSrc && (
+              <img src={primaryCurator.imageSrc} alt={primaryCurator.name} className="h-6 w-6 rounded-full" />
+            )}
+            <p className="font-semibold">{primaryCurator.name}</p>
+          </div>
+        ) : (
+          <p className="font-semibold">{abbreviateAddress(owner)}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SeededMarketAllocationSection({
+  chain,
+  marketId,
+  collateralAsset,
+  loanAsset,
+  supplyUsd,
+}: {
+  chain?: Chain;
+  marketId?: Address;
+  collateralAsset?: Token;
+  loanAsset?: Token;
+  supplyUsd: number;
+}) {
+  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+  return (
+    <div className="mb-8 rounded-lg border bg-white py-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-start gap-2 px-5">
+        <h2 className="text-xl font-semibold">Market Allocation</h2>
+        <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">1 Allocation</span>
+      </div>
+      <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b px-4 py-2 text-sm font-medium">
+        <div className="col-span-2">Market</div>
+        <div>Allocation (%)</div>
+        <div>Allocation ($)</div>
+        <div>Supply Cap</div>
+      </div>
+      {marketId ? (
+        <Link to={`/${chainSlug}/market/${marketId}`} className="contents">
+          <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
+            <div className="col-span-2 flex items-center gap-2">
+              {collateralAsset && (
+                <img src={collateralAsset.imageSrc} alt={collateralAsset.symbol} className="h-6 w-6 rounded-full" />
+              )}
+              {loanAsset && (
+                <img src={loanAsset.imageSrc} alt={loanAsset.symbol} className="-ml-2 h-6 w-6 rounded-full" />
+              )}
+              <span className="font-medium">
+                {collateralAsset?.symbol ?? "Collateral"} / {loanAsset?.symbol ?? "Loan"}
+              </span>
+            </div>
+            <div className="text-muted-foreground text-sm">100%</div>
+            <div className="text-muted-foreground text-sm">
+              ${formatReadableDecimalNumber({ value: supplyUsd, maxDecimals: 2, letters: true })}
+            </div>
+            <div className="text-muted-foreground text-sm">—</div>
+          </div>
+        </Link>
+      ) : (
+        <p className="text-muted-foreground p-4 text-center">No allocations</p>
+      )}
+    </div>
+  );
+}
 
 // Vault Details Grid Component
 function VaultDetailsGrid({
@@ -966,13 +1109,12 @@ function SeededVaultInteractionSection({
           </TransactionButton>
           {onChainMaxWithdraw === 0n && (
             <p className="text-muted-foreground mt-2 text-xs">
-              VaultV2 returns `maxWithdraw = 0` by design. Current withdrawable amount is estimated from user shares and
-              idle vault liquidity.
+              Current withdrawable amount is estimated from user shares and idle vault liquidity.
             </p>
           )}
         </TabsContent>
       </Tabs>
-      {(adapterAddress !== undefined || isAllocator) && (
+      {isAllocator && (
         <div className="mt-4 rounded-lg border bg-white p-4">
           <p className="text-sm font-semibold">Vault V2 Management</p>
           <p className="text-muted-foreground mt-1 text-xs">
@@ -1068,6 +1210,9 @@ export function VaultSubPage() {
   );
   const tokenAddress = currentVaultData?.vault.asset;
   const seededAsset = useToken(seededVault?.asset, chainId);
+  const seededLoanAsset = useToken(seededVault?.marketParams?.loanToken, chainId);
+  const seededCollateralAsset = useToken(seededVault?.marketParams?.collateralToken, chainId);
+  const seededMarketId = seededVault?.supplyingMarkets[0];
   const userShare = userShares[vaultAddress as Address] ?? 0n;
   const curators = currentVault ? getDisplayableCurators(currentVault, topCurators) : {};
   const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
@@ -1087,14 +1232,22 @@ export function VaultSubPage() {
     allowFailure: false,
     query: { enabled: seededVault !== undefined, staleTime: STALE_TIME, gcTime: STALE_TIME },
   });
+  const { data: seededMarketState } = useReadContract({
+    address: MORPHO_EDEN_ADDRESS,
+    abi: morphoMarketReadAbi,
+    functionName: "market",
+    args: seededMarketId ? [seededMarketId] : undefined,
+    query: { enabled: seededMarketId !== undefined, staleTime: STALE_TIME, gcTime: STALE_TIME },
+  });
 
   const [tokenPriceInUSD, setTokenPriceInUSD] = useState<number | undefined>(undefined);
-  const { data: usdPrices } = useTokenPrices(chainId, asset?.address ? [asset.address] : []);
+  const pricingAddress = asset?.address ?? seededAsset?.address;
+  const { data: usdPrices } = useTokenPrices(chainId, pricingAddress ? [pricingAddress] : []);
 
   useEffect(() => {
-    if (!usdPrices || !asset?.address) return;
-    setTokenPriceInUSD(usdPrices[asset.address.toLowerCase() as Address]?.price_usd);
-  }, [usdPrices, asset?.address]);
+    if (!usdPrices || !pricingAddress) return;
+    setTokenPriceInUSD(usdPrices[pricingAddress.toLowerCase() as Address]?.price_usd);
+  }, [usdPrices, pricingAddress]);
 
   if (!currentVault || !currentVaultData || !asset) {
     if (!seededVault || !seededAsset) return null;
@@ -1103,64 +1256,60 @@ export function VaultSubPage() {
     const seededVaultTotalAssets = (seededVaultSnapshot?.[1] as bigint | undefined) ?? 0n;
     const seededVaultTotalSupply = (seededVaultSnapshot?.[2] as bigint | undefined) ?? 0n;
     const seededVaultUserShares = (seededVaultSnapshot?.[3] as bigint | undefined) ?? 0n;
+    const seededCurators = getDisplayableCurators(
+      {
+        address: seededVault.address,
+        owner: seededVault.owner,
+        curator: seededVault.owner,
+        guardian: seededVault.owner,
+      },
+      topCurators,
+    );
+    const seededMarketTotalSupplyAssets = (seededMarketState?.[0] as bigint | undefined) ?? 0n;
+    const seededSupplyUsd =
+      Number(formatUnits(seededMarketTotalSupplyAssets, seededAsset.decimals ?? 18)) * (tokenPriceInUSD ?? 0);
 
     return (
       <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
         <div className="flex h-full grow justify-center pb-16">
-          <div className="flex w-full max-w-7xl flex-col gap-6 py-3 lg:px-5">
-            <VaultHeader />
-            <VaultTitleSection title={seededVaultName} imageSrc={seededAsset.imageSrc ?? ""} />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-lg border bg-white p-4 shadow-sm">
-                <p className="text-muted-foreground text-sm">Vault Asset</p>
-                <p className="text-lg font-semibold">{seededAsset.symbol}</p>
-              </div>
-              <div className="rounded-lg border bg-white p-4 shadow-sm">
-                <p className="text-muted-foreground text-sm">Total Assets</p>
-                <p className="text-lg font-semibold">
-                  {formatBalanceWithSymbol(
-                    seededVaultTotalAssets,
-                    seededAsset.decimals ?? 18,
-                    seededAsset.symbol ?? "",
-                    5,
-                    true,
-                  )}
-                </p>
-              </div>
-              <div className="rounded-lg border bg-white p-4 shadow-sm">
-                <p className="text-muted-foreground text-sm">Your Shares</p>
-                <p className="text-lg font-semibold">
-                  {formatBalanceWithSymbol(
-                    seededVaultUserShares,
-                    seededAsset.decimals ?? 18,
-                    seededAsset.symbol ?? "",
-                    5,
-                    true,
-                  )}
-                </p>
-              </div>
+          <div className="flex w-full max-w-7xl flex-col gap-10 py-3 lg:flex-row lg:px-5">
+            <div className="w-full lg:w-8/12">
+              <VaultHeader />
+              <VaultTitleSection title={seededVaultName} imageSrc={seededAsset.imageSrc ?? ""} />
+              <SeededStatsGrid
+                totalSupply={seededVaultTotalSupply}
+                totalAssets={seededVaultTotalAssets}
+                userShares={seededVaultUserShares}
+                decimals={seededAsset.decimals ?? 18}
+                tokenPriceInUSD={tokenPriceInUSD ?? 0}
+              />
+              <AboutSection />
+              <SeededVaultDetailsGrid asset={seededAsset} owner={seededVault.owner} curators={seededCurators} />
+              <SeededMarketAllocationSection
+                chain={chain}
+                marketId={seededMarketId}
+                collateralAsset={seededCollateralAsset}
+                loanAsset={seededLoanAsset}
+                supplyUsd={seededSupplyUsd}
+              />
             </div>
-            <div className="text-muted-foreground rounded-lg border bg-white p-4 text-xs shadow-sm">
-              Fallback mode: this VaultV2 is shown directly via ERC4626 reads (not MetaMorpho indexing).
-              <br />
-              Total Supply:{" "}
-              {formatBalanceWithSymbol(
-                seededVaultTotalSupply,
-                seededAsset.decimals ?? 18,
-                seededAsset.symbol ?? "",
-                5,
-                true,
-              )}
+            <div className="w-full lg:w-4/12">
+              {/* 
+              <div className="text-muted-foreground mb-4 rounded-lg border bg-white p-4 text-xs shadow-sm">
+                VaultV2 mode: data is read directly on-chain (ERC4626 + Morpho market), including auto
+                allocate/deallocate behavior.
+              </div>
+              */}
+              <SeededVaultInteractionSection
+                vaultAddress={seededVault.address}
+                seededVault={seededVault}
+                userSharesValue={seededVaultUserShares}
+                asset={seededAsset}
+                onRefresh={() => {
+                  void refetchSeededVaultSnapshot();
+                }}
+              />
             </div>
-            <SeededVaultInteractionSection
-              vaultAddress={seededVault.address}
-              seededVault={seededVault}
-              userSharesValue={seededVaultUserShares}
-              asset={seededAsset}
-              onRefresh={() => {
-                void refetchSeededVaultSnapshot();
-              }}
-            />
           </div>
         </div>
       </div>
@@ -1180,7 +1329,7 @@ export function VaultSubPage() {
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
               rewards={rewards}
             />
-            {/* <AboutSection /> */}
+            <AboutSection />
             <VaultDetailsGrid vault={currentVault as AccrualVault} asset={asset} curators={curators} />
             <div className="block lg:hidden">
               <InteractionSection

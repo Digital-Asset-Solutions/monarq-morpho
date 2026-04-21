@@ -35,6 +35,9 @@ export function EarnSubPage() {
       [
         ...vaults.map((vault) => [vault.asset, ...vault.collateralAllocations.keys()]).flat(),
         ...seededVaults.map((vault) => vault.asset),
+        ...seededVaults
+          .map((vault) => vault.marketParams?.collateralToken)
+          .filter((address): address is Address => address !== undefined),
       ].flat(),
     );
     tokenAddressesSet.delete(zeroAddress);
@@ -126,7 +129,18 @@ export function EarnSubPage() {
           apy: 0n,
           fee: 0n,
           allocations: new Map(),
-          collateralAllocations: new Map(),
+          collateralAllocations: seededVault.marketParams
+            ? new Map([
+                [
+                  seededVault.marketParams.collateralToken,
+                  {
+                    proportion: 1_000_000_000_000_000_000n,
+                    lltvs: new Set([seededVault.marketParams.lltv]),
+                    oracles: new Set([seededVault.marketParams.oracle]),
+                  },
+                ],
+              ])
+            : new Map(),
           toAssets: (shares) => shares,
           getAllocationProportion: () => 0n,
         };
@@ -139,7 +153,15 @@ export function EarnSubPage() {
             symbol,
             decimals,
           } as Token,
-          curators: {},
+          curators: getDisplayableCurators(
+            {
+              address: seededVault.address,
+              owner: seededVault.owner,
+              curator: seededVault.owner,
+              guardian: seededVault.owner,
+            },
+            topCurators,
+          ),
           userShares: snapshot?.userShares,
           imageSrc: getTokenURI({ symbol, address: seededVault.asset, chainId }),
           badgeLabel: "V2",

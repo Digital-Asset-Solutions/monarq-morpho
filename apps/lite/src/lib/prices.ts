@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Address } from "viem";
+import { Address, createPublicClient, formatUnits, http } from "viem";
+import { eden } from "viem/chains";
+
+import { edenTokenList } from "@/lib/eden-tokens";
 
 // Chain ID to GeckoTerminal network slug mapping
 const CHAIN_ID_TO_NETWORK_MAP: Record<number, string> = {
@@ -14,6 +17,81 @@ const CHAIN_ID_TO_NETWORK_MAP: Record<number, string> = {
   98866: "plume-network",
   1135: "lisk",
 };
+
+const oracleFeedAbi = [
+  {
+    type: "function",
+    name: "latestRoundData",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [
+      { name: "roundId", type: "uint80" },
+      { name: "answer", type: "int256" },
+      { name: "startedAt", type: "uint256" },
+      { name: "updatedAt", type: "uint256" },
+      { name: "answeredInRound", type: "uint80" },
+    ],
+  },
+  {
+    type: "function",
+    name: "decimals",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+] as const;
+
+const edenClient = createPublicClient({
+  chain: eden,
+  transport: http("https://rpc.eden.gateway.fm/"),
+});
+
+async function getEdenTokenPricesFromFeeds(
+  addresses: string[],
+): Promise<Record<string, { price_usd?: number; mc_usd?: number }>> {
+  const normalized: Record<string, { price_usd?: number; mc_usd?: number }> = {};
+  const feedByToken = new Map(
+    edenTokenList.tokens
+      .filter((token) => token.priceFeed !== undefined)
+      .map((token) => [token.address.toLowerCase(), token.priceFeed as Address]),
+  );
+
+  await Promise.all(
+    addresses.map(async (address) => {
+      const lowerAddress = address.toLowerCase();
+      const feedAddress = feedByToken.get(lowerAddress);
+
+      if (!feedAddress) {
+        normalized[lowerAddress] = { price_usd: undefined, mc_usd: undefined };
+        return;
+      }
+
+      try {
+        const [latestRoundData, feedDecimals] = await Promise.all([
+          edenClient.readContract({
+            address: feedAddress,
+            abi: oracleFeedAbi,
+            functionName: "latestRoundData",
+          }),
+          edenClient.readContract({
+            address: feedAddress,
+            abi: oracleFeedAbi,
+            functionName: "decimals",
+          }),
+        ]);
+
+        const [, answer] = latestRoundData;
+        const priceUsd = answer > 0n ? Number(formatUnits(answer, Number(feedDecimals))) : undefined;
+        normalized[lowerAddress] = { price_usd: priceUsd, mc_usd: undefined };
+      } catch (error) {
+        console.warn(`Failed to fetch Eden feed price for ${address}:`, error);
+        normalized[lowerAddress] = { price_usd: undefined, mc_usd: undefined };
+      }
+    }),
+  );
+
+  return normalized;
+}
 
 async function getTokenPriceByChainAndContract(
   chainIdOrSlug: string,
@@ -89,6 +167,10 @@ export function useTokenPrices(
     queryKey: ["token-prices", chainId, addresses.sort()],
     queryFn: async () => {
       if (!addresses.length) return {};
+
+      if (chainId === eden.id) {
+        return getEdenTokenPricesFromFeeds(addresses);
+      }
 
       const networkSlug = CHAIN_ID_TO_NETWORK_MAP[chainId];
       if (!networkSlug) {

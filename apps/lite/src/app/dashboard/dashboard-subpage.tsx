@@ -14,11 +14,11 @@ import useContractEvents from "@morpho-org/uikit/hooks/use-contract-events/use-c
 import { readAccrualVaults, readAccrualVaultsStateOverride } from "@morpho-org/uikit/lens/read-vaults";
 import { tac } from "@morpho-org/uikit/lib/chains/tac";
 import { CORE_DEPLOYMENTS, getContractDeploymentInfo } from "@morpho-org/uikit/lib/deployments";
-import { getChainSlug, Token } from "@morpho-org/uikit/lib/utils";
+import { formatReadableDecimalNumber, getChainSlug, Token } from "@morpho-org/uikit/lib/utils";
 import { Search } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Link, useOutletContext } from "react-router";
-import { Address, Chain, erc20Abi, erc4626Abi, zeroAddress, type Hex } from "viem";
+import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, zeroAddress, type Hex } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
 import { BorrowPositionTable } from "@/components/borrow-table";
@@ -27,8 +27,10 @@ import { useMarkets } from "@/hooks/use-markets";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
+import { useTokenPrices } from "@/lib/prices";
 import { VAULT_BLACKLIST } from "@/lib/constants";
 import { getDisplayableCurators } from "@/lib/curators";
+import { getSeededMarketIds } from "@/lib/eden-markets";
 import { getSeededVaults } from "@/lib/eden-vaults";
 import { getTokenURI } from "@/lib/tokens";
 
@@ -115,7 +117,11 @@ export function DashboardSubPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vaultsData]);
 
-  const marketIds = useMemo(() => [...new Set(vaultsData?.flatMap((d) => d.vault.withdrawQueue) ?? [])], [vaultsData]);
+  const seededMarketIds = useMemo(() => getSeededMarketIds(chainId), [chainId]);
+  const marketIds = useMemo(
+    () => [...new Set([...(vaultsData?.flatMap((d) => d.vault.withdrawQueue) ?? []), ...seededMarketIds])],
+    [vaultsData, seededMarketIds],
+  );
   const markets = useMarkets({ chainId, marketIds, staleTime: STALE_TIME });
   const vaults = useMemo(() => {
     const vaults: AccrualVault[] = [];
@@ -185,6 +191,9 @@ export function DashboardSubPage() {
       [
         ...vaults.map((vault) => [vault.asset, ...vault.collateralAllocations.keys()]).flat(),
         ...seededVaults.map((vault) => vault.asset),
+        ...seededVaults
+          .map((vault) => vault.marketParams?.collateralToken)
+          .filter((address): address is Address => address !== undefined),
       ].flat(),
     );
 
@@ -312,7 +321,18 @@ export function DashboardSubPage() {
           apy: 0n,
           fee: 0n,
           allocations: new Map(),
-          collateralAllocations: new Map(),
+          collateralAllocations: seededVault.marketParams
+            ? new Map([
+                [
+                  seededVault.marketParams.collateralToken,
+                  {
+                    proportion: 1_000_000_000_000_000_000n,
+                    lltvs: new Set([seededVault.marketParams.lltv]),
+                    oracles: new Set([seededVault.marketParams.oracle]),
+                  },
+                ],
+              ])
+            : new Map(),
           toAssets: (shares: bigint) => shares,
           getAllocationProportion: () => 0n,
         };
@@ -325,7 +345,15 @@ export function DashboardSubPage() {
             symbol,
             decimals,
           } as Token,
-          curators: {},
+          curators: getDisplayableCurators(
+            {
+              address: seededVault.address,
+              owner: seededVault.owner,
+              curator: seededVault.owner,
+              guardian: seededVault.owner,
+            },
+            topCurators,
+          ),
           userShares: snapshot?.userShares,
           imageSrc: getTokenURI({ symbol, address: seededVault.asset, chainId }),
           badgeLabel: "V2",
@@ -387,6 +415,46 @@ export function DashboardSubPage() {
     });
   }, [markets, positionsMap]);
 
+  const positionPriceAddresses = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...userRows.map((row) => row.asset.address),
+          ...userBorrowMarkets.map((market) => market.params.loanToken),
+        ]),
+      ].sort(),
+    [userRows, userBorrowMarkets],
+  );
+  const { data: positionUsdPrices } = useTokenPrices(chainId ?? 0, positionPriceAddresses as Address[], {
+    enabled: chainId !== undefined && positionPriceAddresses.length > 0,
+  });
+
+  const earnPositionUsd = useMemo(
+    () =>
+      userRows.reduce((acc, row) => {
+        if (row.userShares === undefined || row.asset.decimals === undefined) return acc;
+        const price = positionUsdPrices?.[row.asset.address.toLowerCase() as Address]?.price_usd ?? 0;
+        const assets = row.vault.toAssets(row.userShares);
+        return acc + Number(formatUnits(assets, row.asset.decimals)) * price;
+      }, 0),
+    [userRows, positionUsdPrices],
+  );
+
+  const borrowPositionUsd = useMemo(
+    () =>
+      userBorrowMarkets.reduce((acc, market) => {
+        const position = positionsMap.get(market.id);
+        const loanToken = tokens.get(market.params.loanToken);
+        if (!position || loanToken?.decimals === undefined) return acc;
+        const price = positionUsdPrices?.[market.params.loanToken.toLowerCase() as Address]?.price_usd ?? 0;
+        return acc + Number(formatUnits(position.borrowAssets, loanToken.decimals)) * price;
+      }, 0),
+    [userBorrowMarkets, positionsMap, tokens, positionUsdPrices],
+  );
+
+  const earnPositionUsdText = `$${formatReadableDecimalNumber({ value: earnPositionUsd, maxDecimals: 2, letters: true })}`;
+  const borrowPositionUsdText = `$${formatReadableDecimalNumber({ value: borrowPositionUsd, maxDecimals: 2, letters: true })}`;
+
   const chainSlug = chain ? getChainSlug(chain) : "ethereum";
 
   // Empty state component for when no positions are found
@@ -418,7 +486,7 @@ export function DashboardSubPage() {
             <div className="flex items-center justify-start gap-2 p-4">
               <h2 className="text-xl">Earn</h2>
               <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-                {userRows.length} {userRows.length <= 1 ? "position" : "positions"} / $0.00
+                {userRows.length} {userRows.length <= 1 ? "position" : "positions"} / {earnPositionUsdText}
               </span>
             </div>
             {userRows.length > 0 ? (
@@ -444,7 +512,7 @@ export function DashboardSubPage() {
             <div className="flex items-center justify-start gap-2 p-4">
               <h2 className="text-xl">Borrow</h2>
               <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-                {userBorrowMarkets.length} {userBorrowMarkets.length <= 1 ? "position" : "positions"} / $0.00
+                {userBorrowMarkets.length} {userBorrowMarkets.length <= 1 ? "position" : "positions"} / {borrowPositionUsdText}
               </span>
             </div>
             {userBorrowMarkets.length > 0 ? (

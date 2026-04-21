@@ -10,7 +10,15 @@ type TokenList = {
   timestamp: string;
   keywords: string[];
   version: { major: number; minor: number; patch: number };
-  tokens: { name: string; symbol: string; decimals: number; chainId: number; address: Address; logoURI: string }[];
+  tokens: {
+    name: string;
+    symbol: string;
+    decimals: number;
+    chainId: number;
+    address: Address;
+    logoURI: string;
+    priceFeed?: Address;
+  }[];
 };
 
 const tokenUriDebugSeen = new Set<string>();

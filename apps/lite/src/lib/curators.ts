@@ -63,6 +63,12 @@ export const MANUALLY_WHITELISTED_CURATORS: FragmentOf<typeof CuratorFragment>[]
     name: "Eden Mainnet",
     url: "https://eden.blockscout.com/",
   },
+  {
+    addresses: [{ address: "0xFCB33B700eDED624EEDa067bB4E23FA9bc552823", chainId: customChains.eden.id }],
+    image: "/monarq-brand-kit/Logos/Symbol/PNG/monarq_icon_b.png",
+    name: "Monarq",
+    url: "",
+  },
 ];
 
 export const ADDITIONAL_OFFCHAIN_CURATORS: Record<Address, DisplayableCurators> = {

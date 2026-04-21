@@ -79,10 +79,12 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
   );
   const includedOwners = useMemo(
     () =>
-      [...new Set([
-        ...topCurators.flatMap((curator) => curator.addresses?.map((entry) => entry.address as Address) ?? []),
-        ...seededVaultOwners,
-      ])].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+      [
+        ...new Set([
+          ...topCurators.flatMap((curator) => curator.addresses?.map((entry) => entry.address as Address) ?? []),
+          ...seededVaultOwners,
+        ]),
+      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
     [topCurators, seededVaultOwners],
   );
   const { data: vaultsData } = useReadContract({
@@ -116,7 +118,6 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
 - ❌ owner is not whitelisted
 `);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vaultsData, metaMorphoAddresses, seededVaultAddressSet]);
 
   const seededMarketIds = useMemo(() => getSeededMarketIds(chainId), [chainId]);

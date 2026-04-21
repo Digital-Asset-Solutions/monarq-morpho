@@ -17,7 +17,7 @@ import { useMarkets } from "@/hooks/use-markets";
 import { useToken } from "@/hooks/use-token";
 import { useVaults } from "@/hooks/use-vaults";
 import { TRANSACTION_DATA_SUFFIX, MARKET_BLACKLIST } from "@/lib/constants";
-import { DisplayableCurators } from "@/lib/curators";
+import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 import { getSeededVaultsForMarket } from "@/lib/eden-vaults";
 import { useTokenPrices } from "@/lib/prices";
 
@@ -770,6 +770,7 @@ export function MarketSubPage() {
     borrowMarketsArray: markets,
     marketVaults,
     vaultsData,
+    topCurators,
   } = useVaults({
     chainId,
     staleTime: STALE_TIME,
@@ -829,18 +830,18 @@ export function MarketSubPage() {
         name: vault.name,
         address: vault.address,
         totalAssets: (seededVaultTotalAssets?.[index]?.result as bigint | undefined) ?? 0n,
-        curators: {
-          Seeded: {
-            name: "Seeded",
-            roles: [{ name: "Owner", address: vault.owner }],
-            url: `https://eden.blockscout.com/address/${vault.owner}`,
-            imageSrc: null,
-            shouldAlwaysShow: true,
+        curators: getDisplayableCurators(
+          {
+            address: vault.address,
+            owner: vault.owner,
+            curator: vault.owner,
+            guardian: vault.owner,
           },
-        } as DisplayableCurators,
+          topCurators,
+        ),
       }));
     return [...currentMarketVaults, ...seededFallback];
-  }, [currentMarketVaults, seededMarketVaults, seededVaultTotalAssets]);
+  }, [currentMarketVaults, seededMarketVaults, seededVaultTotalAssets, topCurators]);
 
   // Check if market is blacklisted
   const blacklistedMarkets = chainId ? (MARKET_BLACKLIST[chainId] ?? []) : [];
