@@ -36,6 +36,14 @@ export const SEEDED_VAULTS: SeededVault[] = [
       lltv: 860000000000000000n,
     },
   },
+  {
+    chainId: eden.id,
+    address: "0x1CbaC7d53Ad2B2C510Bd064c4cA0383eEd06a1E9",
+    owner: "0xFCB33B700eDED624EEDa067bB4E23FA9bc552823",
+    name: "Eden WTIA Vault",
+    asset: "0x00000000000000000000000000000000ce1E571a",
+    supplyingMarkets: [],
+  },
 ];
 
 export function getSeededVaultAddresses(chainId: number | undefined): Address[] {

@@ -27,11 +27,11 @@ import { useMarkets } from "@/hooks/use-markets";
 import * as Merkl from "@/hooks/use-merkl-campaigns";
 import { useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
-import { useTokenPrices } from "@/lib/prices";
 import { VAULT_BLACKLIST } from "@/lib/constants";
 import { getDisplayableCurators } from "@/lib/curators";
 import { getSeededMarketIds } from "@/lib/eden-markets";
 import { getSeededVaults } from "@/lib/eden-vaults";
+import { useTokenPrices } from "@/lib/prices";
 import { getTokenURI } from "@/lib/tokens";
 
 const restructure = (position: readonly [bigint, bigint, bigint]) => ({
@@ -512,7 +512,8 @@ export function DashboardSubPage() {
             <div className="flex items-center justify-start gap-2 p-4">
               <h2 className="text-xl">Borrow</h2>
               <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">
-                {userBorrowMarkets.length} {userBorrowMarkets.length <= 1 ? "position" : "positions"} / {borrowPositionUsdText}
+                {userBorrowMarkets.length} {userBorrowMarkets.length <= 1 ? "position" : "positions"} /{" "}
+                {borrowPositionUsdText}
               </span>
             </div>
             {userBorrowMarkets.length > 0 ? (
