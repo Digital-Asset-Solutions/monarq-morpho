@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import path from "path";
 
 import tailwindcss from "@tailwindcss/vite";
@@ -13,12 +12,5 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  test: {
-    include: ["./test/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
-    environment: "jsdom",
-    setupFiles: ["./test/setup.ts"],
-    globalSetup: ["./test/global-setup.ts"],
-    testTimeout: 60_000,
   },
 });
