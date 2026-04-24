@@ -4,7 +4,7 @@ import { WalletMenu } from "@morpho-org/uikit/components/wallet-menu";
 import { getChainSlug } from "@morpho-org/uikit/lib/utils";
 import { ConnectKitButton } from "connectkit";
 import { useCallback, useEffect, useMemo } from "react";
-import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { useChains } from "wagmi";
 
 import { AppSidebar, AppSidebarLayout } from "@/components/header";
@@ -15,7 +15,6 @@ enum SubPage {
   Earn = "earn",
   Borrow = "borrow",
   Dashboard = "dashboard",
-  Faucet = "faucet",
   Vault = "vault",
   Market = "market",
 }
@@ -77,9 +76,7 @@ export default function Page() {
         ? "Vault"
         : selectedSubPage === SubPage.Market
           ? "Market"
-          : selectedSubPage === SubPage.Faucet
-            ? "Faucet"
-            : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
+          : selectedSubPage.charAt(0).toUpperCase() + selectedSubPage.slice(1);
     document.title = `${APP_DETAILS.name} | ${title}`;
   }, [selectedSubPage]);
 
@@ -90,11 +87,6 @@ export default function Page() {
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-sidebar-border sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end border-b px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1 mr-auto lg:hidden" />
           <div className="mr-2 flex items-center gap-2">
-            <Button asChild variant="tertiary" size="lg" className="border p-3 font-light">
-              <Link to={`/${selectedChainSlug}/faucet`}>
-                <span>Mint Tokens</span>
-              </Link>
-            </Button>
             <RewardsButton chainId={chain?.id} />
             <WalletMenu
               selectedChainSlug={selectedChainSlug!}

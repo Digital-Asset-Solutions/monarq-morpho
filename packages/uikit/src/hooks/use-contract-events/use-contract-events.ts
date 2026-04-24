@@ -293,7 +293,7 @@ export default function useContractEvents<
       gcTime: Infinity,
       enabled: args.query?.enabled && strategy.length > 0 && blockNumbers !== undefined,
       meta: { strategy, toBlockMax: seed[1], finalizedBlock: blockNumbers?.[2] },
-      retry: true, // TODO: If strategy were perfect, this could be `false`. Temporary crutch!
+      retry: 2, // Keep resilience without creating runaway retry storms on flaky RPCs.
       notifyOnChangeProps: ["data" as const],
     })),
   });

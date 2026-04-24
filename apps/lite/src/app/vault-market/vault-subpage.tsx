@@ -3,8 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@morpho-org/uikit/comp
 import { TokenAmountInput } from "@morpho-org/uikit/components/token-amount-input";
 import { TransactionButton } from "@morpho-org/uikit/components/transaction-button";
 import {
+  abbreviateAddress,
   computeNetApy,
   formatApy,
+  formatBalanceWithSymbol,
   formatReadableDecimalNumber,
   getChainSlug,
   Token,
@@ -13,7 +15,16 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
-import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
+import {
+  Address,
+  Chain,
+  encodeAbiParameters,
+  erc20Abi,
+  erc4626Abi,
+  formatUnits,
+  parseAbiParameters,
+  parseUnits,
+} from "viem";
 import { useReadContracts, useAccount, useReadContract } from "wagmi";
 
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
@@ -24,6 +35,7 @@ import { useTokens } from "@/hooks/use-tokens";
 import { useVaults } from "@/hooks/use-vaults";
 import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
 import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
+import { getSeededVaults, type SeededVault } from "@/lib/eden-vaults";
 import { useTokenPrices } from "@/lib/prices";
 
 enum Actions {
@@ -37,6 +49,68 @@ const STYLE_TAB = "hover:bg-primary rounded-sm x-5 duration-200 ease-in-out curs
 const STYLE_INPUT_WRAPPER =
   "bg-[#F9FAFB] border border-[#F2F4F7] flex flex-col rounded-lg p-4 transition-colors duration-200 ease-in-out";
 const STYLE_INPUT_HEADER = "flex items-start justify-between text-xs font-light";
+
+const vaultV2ManagementAbi = [
+  {
+    type: "function",
+    name: "isAllocator",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ type: "bool" }],
+  },
+  { type: "function", name: "liquidityAdapter", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
+  {
+    type: "function",
+    name: "setLiquidityAdapterAndData",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "newLiquidityAdapter", type: "address" },
+      { name: "newLiquidityData", type: "bytes" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "allocate",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "adapter", type: "address" },
+      { name: "data", type: "bytes" },
+      { name: "assets", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "deallocate",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "adapter", type: "address" },
+      { name: "data", type: "bytes" },
+      { name: "assets", type: "uint256" },
+    ],
+    outputs: [],
+  },
+] as const;
+
+const morphoMarketReadAbi = [
+  {
+    type: "function",
+    name: "market",
+    stateMutability: "view",
+    inputs: [{ name: "id", type: "bytes32" }],
+    outputs: [
+      { name: "totalSupplyAssets", type: "uint128" },
+      { name: "totalSupplyShares", type: "uint128" },
+      { name: "totalBorrowAssets", type: "uint128" },
+      { name: "totalBorrowShares", type: "uint128" },
+      { name: "lastUpdate", type: "uint128" },
+      { name: "fee", type: "uint128" },
+    ],
+  },
+] as const;
+
+const MORPHO_EDEN_ADDRESS = "0xF050a2BB0468FF23cF2964AC182196C94D6815C3" as const;
 
 // Header Section Component
 function VaultHeader() {
@@ -118,19 +192,161 @@ function StatsGrid({
   );
 }
 
-// About Section Component
-// function AboutSection() {
-//   return (
-//     <div className="mb-8">
-//       <h2 className="text-lg font-semibold">About the Vault</h2>
-//       <p className="text-muted-foreground text-sm leading-relaxed">
-//         Stake your $USDp and start raking in some chill passive earnings with $sUSDp!Stake your $USDp and start raking
-//         in some chill passive earnings with $sUSDp!Stake your $USDp and start raking in some chill passive earnings with
-//         $sUSDp!
-//       </p>
-//     </div>
-//   );
-// }
+function AboutSection({ description }: { description?: string }) {
+  return (
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold">About the Vault</h2>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {description ??
+          "Deposit the vault asset to earn yield through Monarq allocations. Withdrawals depend on available market liquidity."}
+      </p>
+    </div>
+  );
+}
+
+function SeededStatsGrid({
+  totalSupply,
+  totalAssets,
+  userShares,
+  decimals,
+  tokenPriceInUSD,
+}: {
+  totalSupply: bigint;
+  totalAssets: bigint;
+  userShares: bigint;
+  decimals: number;
+  tokenPriceInUSD: number;
+}) {
+  const totalDeposits = Number(formatUnits(totalSupply, decimals)) * tokenPriceInUSD;
+  const liquidity = Number(formatUnits(totalAssets, decimals)) * tokenPriceInUSD;
+  const yourDeposit = Number(formatUnits(userShares, decimals)) * tokenPriceInUSD;
+
+  return (
+    <div className="mb-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Total Deposits</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: totalDeposits, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Liquidity</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: liquidity, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">APY</p>
+        <p className="text-2xl font-semibold">—</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground mb-1 text-sm">Your Deposit</p>
+        <p className="text-2xl font-semibold">
+          ${formatReadableDecimalNumber({ value: yourDeposit, maxDecimals: 2, letters: true })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SeededVaultDetailsGrid({
+  asset,
+  owner,
+  curators,
+}: {
+  asset: Token;
+  owner: Address;
+  curators: DisplayableCurators;
+}) {
+  const primaryCurator = Object.values(curators)[0];
+
+  return (
+    <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Vault Token</p>
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full">
+            <span className="text-xs text-white">
+              <img src={asset.imageSrc} alt={asset.symbol} className="h-6 w-6 rounded-full" />
+            </span>
+          </div>
+          <span className="font-semibold">{asset.symbol}</span>
+        </div>
+      </div>
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Performance Fee</p>
+        <p className="font-semibold">0%</p>
+      </div>
+      <div className="border-border rounded-lg border bg-white p-6 shadow-sm">
+        <p className="text-muted-foreground mb-2 text-sm">Curator</p>
+        {primaryCurator ? (
+          <div className="flex items-center gap-2">
+            {primaryCurator.imageSrc && (
+              <img src={primaryCurator.imageSrc} alt={primaryCurator.name} className="h-6 w-6 rounded-full" />
+            )}
+            <p className="font-semibold">{primaryCurator.name}</p>
+          </div>
+        ) : (
+          <p className="font-semibold">{abbreviateAddress(owner)}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SeededMarketAllocationSection({
+  chain,
+  marketId,
+  collateralAsset,
+  loanAsset,
+  supplyUsd,
+}: {
+  chain?: Chain;
+  marketId?: Address;
+  collateralAsset?: Token;
+  loanAsset?: Token;
+  supplyUsd: number;
+}) {
+  const chainSlug = chain ? getChainSlug(chain) : "ethereum";
+  return (
+    <div className="mb-8 rounded-lg border bg-white py-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-start gap-2 px-5">
+        <h2 className="text-xl font-semibold">Market Allocation</h2>
+        <span className="bg-secondary/10 text-secondary mt-1 rounded-full px-2 py-1 text-xs">1 Allocation</span>
+      </div>
+      <div className="border-border bg-muted/50 grid grid-cols-5 gap-4 border-b px-4 py-2 text-sm font-medium">
+        <div className="col-span-2">Market</div>
+        <div>Allocation (%)</div>
+        <div>Allocation ($)</div>
+        <div>Supply Cap</div>
+      </div>
+      {marketId ? (
+        <Link to={`/${chainSlug}/market/${marketId}`} className="contents">
+          <div className="hover:bg-primary grid cursor-pointer grid-cols-5 items-center gap-4 border-b p-4">
+            <div className="col-span-2 flex items-center gap-2">
+              {collateralAsset && (
+                <img src={collateralAsset.imageSrc} alt={collateralAsset.symbol} className="h-6 w-6 rounded-full" />
+              )}
+              {loanAsset && (
+                <img src={loanAsset.imageSrc} alt={loanAsset.symbol} className="-ml-2 h-6 w-6 rounded-full" />
+              )}
+              <span className="font-medium">
+                {collateralAsset?.symbol ?? "Collateral"} / {loanAsset?.symbol ?? "Loan"}
+              </span>
+            </div>
+            <div className="text-muted-foreground text-sm">100%</div>
+            <div className="text-muted-foreground text-sm">
+              ${formatReadableDecimalNumber({ value: supplyUsd, maxDecimals: 2, letters: true })}
+            </div>
+            <div className="text-muted-foreground text-sm">—</div>
+          </div>
+        </Link>
+      ) : (
+        <p className="text-muted-foreground p-4 text-center">No allocations</p>
+      )}
+    </div>
+  );
+}
 
 // Vault Details Grid Component
 function VaultDetailsGrid({
@@ -624,6 +840,354 @@ function InteractionSection({
   );
 }
 
+function SeededVaultInteractionSection({
+  vaultAddress,
+  seededVault,
+  userSharesValue,
+  asset,
+  onRefresh,
+}: {
+  vaultAddress: Address;
+  seededVault: SeededVault;
+  userSharesValue: bigint;
+  asset: Token;
+  onRefresh: () => void;
+}) {
+  const { address: userAddress } = useAccount();
+  const [selectedTab, setSelectedTab] = useState(Actions.Deposit);
+  const [textInputValue, setTextInputValue] = useState("");
+  const [manageInputValue, setManageInputValue] = useState("");
+
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: asset.address,
+    abi: erc20Abi,
+    functionName: "allowance",
+    args: [userAddress ?? "0x", vaultAddress],
+    query: { enabled: !!userAddress, staleTime: 5_000, gcTime: 5_000 },
+  });
+
+  const { data: maxes, refetch: refetchMaxes } = useReadContracts({
+    contracts: [
+      { address: vaultAddress, abi: erc4626Abi, functionName: "maxWithdraw", args: [userAddress ?? "0x"] },
+      { address: asset.address, abi: erc20Abi, functionName: "balanceOf", args: [userAddress ?? "0x"] },
+    ],
+    allowFailure: false,
+    query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
+  });
+
+  const { data: seededVaultReadData, refetch: refetchSeededVaultReadData } = useReadContracts({
+    contracts: [
+      { address: vaultAddress, abi: erc20Abi, functionName: "balanceOf", args: [userAddress ?? "0x"] },
+      { address: vaultAddress, abi: erc4626Abi, functionName: "previewRedeem", args: [userSharesValue] },
+      { address: asset.address, abi: erc20Abi, functionName: "balanceOf", args: [vaultAddress] },
+      { address: vaultAddress, abi: vaultV2ManagementAbi, functionName: "isAllocator", args: [userAddress ?? "0x"] },
+      { address: vaultAddress, abi: vaultV2ManagementAbi, functionName: "liquidityAdapter" },
+    ],
+    allowFailure: false,
+    query: { enabled: !!userAddress, staleTime: 20_000, gcTime: 20_000, placeholderData: keepPreviousData },
+  });
+
+  const marketId = seededVault.supplyingMarkets[0];
+  const { data: seededVaultMarketData, refetch: refetchSeededVaultMarketData } = useReadContract({
+    address: MORPHO_EDEN_ADDRESS,
+    abi: morphoMarketReadAbi,
+    functionName: "market",
+    args: marketId ? [marketId] : undefined,
+    query: {
+      enabled: marketId !== undefined,
+      staleTime: 20_000,
+      gcTime: 20_000,
+      placeholderData: keepPreviousData,
+    },
+  });
+
+  const userShares = (seededVaultReadData?.[0] as bigint | undefined) ?? 0n;
+  const previewRedeemForAllShares = userShares > 0n ? ((seededVaultReadData?.[1] as bigint | undefined) ?? 0n) : 0n;
+  const idleVaultAssets = (seededVaultReadData?.[2] as bigint | undefined) ?? 0n;
+  const isAllocator = (seededVaultReadData?.[3] as boolean | undefined) ?? false;
+  const liquidityAdapter = (seededVaultReadData?.[4] as Address | undefined) ?? "0x";
+  const adapterAddress = seededVault.adapter;
+  const isLiquidityAdapterSet =
+    adapterAddress !== undefined && liquidityAdapter.toLowerCase() === adapterAddress.toLowerCase();
+  const totalSupplyAssets = (seededVaultMarketData?.[0] as bigint | undefined) ?? 0n;
+  const totalBorrowAssets = (seededVaultMarketData?.[2] as bigint | undefined) ?? 0n;
+  const marketAvailableLiquidity = totalSupplyAssets > totalBorrowAssets ? totalSupplyAssets - totalBorrowAssets : 0n;
+  const adapterDeallocationCapacity = idleVaultAssets + marketAvailableLiquidity;
+  const onChainMaxWithdraw = (maxes?.[0] as bigint | undefined) ?? 0n;
+  // When a liquidity adapter is configured, withdraw/redeem can trigger deallocation internally,
+  // so idle assets alone are not representative of the true withdrawable amount.
+  const fallbackMaxWithdraw = isLiquidityAdapterSet
+    ? previewRedeemForAllShares < adapterDeallocationCapacity
+      ? previewRedeemForAllShares
+      : adapterDeallocationCapacity
+    : previewRedeemForAllShares < idleVaultAssets
+      ? previewRedeemForAllShares
+      : idleVaultAssets;
+  const effectiveMaxWithdraw = onChainMaxWithdraw > 0n ? onChainMaxWithdraw : fallbackMaxWithdraw;
+  const effectiveMaxDeallocate =
+    previewRedeemForAllShares < marketAvailableLiquidity ? previewRedeemForAllShares : marketAvailableLiquidity;
+
+  const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
+  const manageInput = asset.decimals !== undefined ? parseUnits(manageInputValue, asset.decimals) : undefined;
+  const hasEnoughBalanceForDeposit =
+    selectedTab === Actions.Deposit
+      ? inputValue !== undefined && inputValue > 0n && maxes?.[1] !== undefined && maxes[1] >= inputValue
+      : true;
+  const hasEnoughBalanceForWithdraw =
+    selectedTab === Actions.Withdraw
+      ? inputValue !== undefined && inputValue > 0n && effectiveMaxWithdraw >= inputValue
+      : true;
+
+  const marketParamsData =
+    seededVault.marketParams === undefined
+      ? undefined
+      : encodeAbiParameters(
+          parseAbiParameters("(address loanToken,address collateralToken,address oracle,address irm,uint256 lltv)"),
+          [seededVault.marketParams],
+        );
+
+  const approvalTxnConfig =
+    userAddress !== undefined && inputValue !== undefined && allowance !== undefined && allowance < inputValue
+      ? ({
+          address: asset.address,
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [vaultAddress, inputValue],
+        } as const)
+      : undefined;
+
+  const depositTxnConfig =
+    userAddress !== undefined && inputValue !== undefined
+      ? ({
+          address: vaultAddress,
+          abi: erc4626Abi,
+          functionName: "deposit",
+          args: [inputValue, userAddress],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
+      : undefined;
+
+  const withdrawTxnConfig =
+    userAddress !== undefined && inputValue !== undefined
+      ? ({
+          address: vaultAddress,
+          abi: erc4626Abi,
+          functionName: "withdraw",
+          args: [inputValue, userAddress, userAddress],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
+      : undefined;
+
+  const setLiquidityAdapterTxnConfig =
+    adapterAddress !== undefined && marketParamsData !== undefined && isAllocator && !isLiquidityAdapterSet
+      ? ({
+          address: vaultAddress,
+          abi: vaultV2ManagementAbi,
+          functionName: "setLiquidityAdapterAndData",
+          args: [adapterAddress, marketParamsData],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
+      : undefined;
+
+  const allocateTxnConfig =
+    adapterAddress !== undefined && marketParamsData !== undefined && isAllocator && manageInput !== undefined
+      ? ({
+          address: vaultAddress,
+          abi: vaultV2ManagementAbi,
+          functionName: "allocate",
+          args: [adapterAddress, marketParamsData, manageInput],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
+      : undefined;
+
+  const deallocateTxnConfig =
+    adapterAddress !== undefined && marketParamsData !== undefined && isAllocator && manageInput !== undefined
+      ? ({
+          address: vaultAddress,
+          abi: vaultV2ManagementAbi,
+          functionName: "deallocate",
+          args: [adapterAddress, marketParamsData, manageInput],
+          dataSuffix: TRANSACTION_DATA_SUFFIX,
+        } as const)
+      : undefined;
+
+  return (
+    <div className="border-border rounded-lg border bg-white py-5 shadow-sm">
+      <Tabs
+        defaultValue={Actions.Deposit}
+        className="w-full gap-3 px-4"
+        value={selectedTab}
+        onValueChange={(value) => {
+          setSelectedTab(value as Actions);
+          setTextInputValue("");
+        }}
+      >
+        <TabsList className="grid h-fit w-full grid-cols-2 gap-1 border border-[#F5F5F] bg-[#FAFAFA]">
+          <TabsTrigger className={STYLE_TAB} value={Actions.Deposit}>
+            {Actions.Deposit}
+          </TabsTrigger>
+          <TabsTrigger className={STYLE_TAB} value={Actions.Withdraw}>
+            {Actions.Withdraw}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value={Actions.Deposit}>
+          <div className={STYLE_INPUT_WRAPPER}>
+            <div className={STYLE_INPUT_HEADER}>
+              <span className="mt-1">Your Deposit</span>
+              <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 text-[14px] font-bold">
+                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                {asset.symbol ?? ""}
+              </span>
+            </div>
+            <TokenAmountInput
+              decimals={asset.decimals}
+              value={textInputValue}
+              symbol={asset.symbol ?? ""}
+              maxValue={maxes?.[1]}
+              onChange={setTextInputValue}
+            />
+          </div>
+          {approvalTxnConfig ? (
+            <TransactionButton
+              variables={approvalTxnConfig}
+              disabled={inputValue === 0n || !hasEnoughBalanceForDeposit}
+              onTxnReceipt={() => {
+                void refetchAllowance();
+                void refetchMaxes();
+                onRefresh();
+              }}
+            >
+              {!hasEnoughBalanceForDeposit && inputValue !== undefined && inputValue > 0n
+                ? "Insufficient Balance"
+                : "Approve"}
+            </TransactionButton>
+          ) : (
+            <TransactionButton
+              variables={depositTxnConfig}
+              disabled={!inputValue || !hasEnoughBalanceForDeposit}
+              onTxnReceipt={() => {
+                setTextInputValue("");
+                void refetchMaxes();
+                onRefresh();
+              }}
+            >
+              {!hasEnoughBalanceForDeposit && inputValue !== undefined && inputValue > 0n
+                ? "Insufficient Balance"
+                : "Deposit"}
+            </TransactionButton>
+          )}
+        </TabsContent>
+        <TabsContent value={Actions.Withdraw}>
+          <div className={STYLE_INPUT_WRAPPER}>
+            <div className={STYLE_INPUT_HEADER}>
+              <span className="mt-1">Your Withdrawal</span>
+              <span className="text-primary-foreground/70 flex items-center gap-2 rounded-lg bg-white p-2 text-[14px] font-bold">
+                <img className="h-6 rounded-full" height={24} width={24} src={asset.imageSrc} />
+                {asset.symbol ?? ""}
+              </span>
+            </div>
+            <TokenAmountInput
+              decimals={asset.decimals}
+              value={textInputValue}
+              maxValue={effectiveMaxWithdraw}
+              symbol={asset.symbol ?? ""}
+              onChange={setTextInputValue}
+            />
+          </div>
+          <TransactionButton
+            variables={withdrawTxnConfig}
+            disabled={!inputValue || !hasEnoughBalanceForWithdraw}
+            onTxnReceipt={() => {
+              setTextInputValue("");
+              void refetchMaxes();
+              onRefresh();
+            }}
+          >
+            {!hasEnoughBalanceForWithdraw && inputValue !== undefined && inputValue > 0n
+              ? "Insufficient Balance"
+              : "Withdraw"}
+          </TransactionButton>
+          {onChainMaxWithdraw === 0n && (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Current withdrawable amount is estimated from user shares and idle vault liquidity.
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
+      {isAllocator && (
+        <div className="mt-4 rounded-lg border bg-white p-4">
+          <p className="text-sm font-semibold">Vault V2 Management</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Idle liquidity in vault:{" "}
+            {formatBalanceWithSymbol(idleVaultAssets, asset.decimals ?? 18, asset.symbol ?? "", 5, true)}
+          </p>
+          <p className="text-muted-foreground text-xs">Allocator role: {isAllocator ? "yes" : "no"}</p>
+          <p className="text-muted-foreground text-xs">
+            Liquidity adapter:{" "}
+            {liquidityAdapter === "0x0000000000000000000000000000000000000000" ? "not set" : liquidityAdapter}
+          </p>
+
+          {setLiquidityAdapterTxnConfig && (
+            <div className="mt-3">
+              <TransactionButton
+                variables={setLiquidityAdapterTxnConfig}
+                disabled={false}
+                onTxnReceipt={() => {
+                  void refetchSeededVaultReadData();
+                  void refetchMaxes();
+                  onRefresh();
+                }}
+              >
+                Set Liquidity Adapter
+              </TransactionButton>
+            </div>
+          )}
+
+          {adapterAddress !== undefined && marketParamsData !== undefined && isAllocator && (
+            <div className="mt-3">
+              <TokenAmountInput
+                decimals={asset.decimals}
+                value={manageInputValue}
+                symbol={asset.symbol ?? ""}
+                maxValue={effectiveMaxDeallocate}
+                onChange={setManageInputValue}
+              />
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <TransactionButton
+                  variables={deallocateTxnConfig}
+                  disabled={!manageInput || manageInput === 0n}
+                  onTxnReceipt={() => {
+                    setManageInputValue("");
+                    void refetchSeededVaultReadData();
+                    void refetchSeededVaultMarketData();
+                    void refetchMaxes();
+                    onRefresh();
+                  }}
+                >
+                  Deallocate
+                </TransactionButton>
+                <TransactionButton
+                  variables={allocateTxnConfig}
+                  disabled={!manageInput || manageInput === 0n}
+                  onTxnReceipt={() => {
+                    setManageInputValue("");
+                    void refetchSeededVaultReadData();
+                    void refetchSeededVaultMarketData();
+                    void refetchMaxes();
+                    onRefresh();
+                  }}
+                >
+                  Allocate
+                </TransactionButton>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main Vault SubPage Component
 export function VaultSubPage() {
   const { address: userAddress } = useAccount();
@@ -637,23 +1201,120 @@ export function VaultSubPage() {
   });
   const currentVaultData = vaultsData?.find((vault) => vault.vault.vault === vaultAddress);
   const currentVault = vaults?.find((vault) => vault.address === vaultAddress);
+  const seededVault = useMemo(
+    () =>
+      getSeededVaults(chainId).find(
+        (vault) => vaultAddress !== undefined && vault.address.toLowerCase() === vaultAddress.toLowerCase(),
+      ),
+    [chainId, vaultAddress],
+  );
   const tokenAddress = currentVaultData?.vault.asset;
+  const seededAsset = useToken(seededVault?.asset, chainId);
+  const seededLoanAsset = useToken(seededVault?.marketParams?.loanToken, chainId);
+  const seededCollateralAsset = useToken(seededVault?.marketParams?.collateralToken, chainId);
+  const seededMarketId = seededVault?.supplyingMarkets[0];
   const userShare = userShares[vaultAddress as Address] ?? 0n;
   const curators = currentVault ? getDisplayableCurators(currentVault, topCurators) : {};
   const lendingRewards = useMerklOpportunities({ chainId, side: Merkl.CampaignSide.EARN, userAddress });
   const rewards = lendingRewards.get(currentVaultData?.vault.vault as Address) ?? [];
   const allocations = currentVault?.allocations;
   const asset = useToken(tokenAddress as Address, chainId);
+  const { data: seededVaultSnapshot, refetch: refetchSeededVaultSnapshot } = useReadContracts({
+    contracts:
+      seededVault === undefined
+        ? []
+        : ([
+            { address: seededVault.address, abi: erc20Abi, functionName: "name" },
+            { address: seededVault.address, abi: erc4626Abi, functionName: "totalAssets" },
+            { address: seededVault.address, abi: erc20Abi, functionName: "totalSupply" },
+            { address: seededVault.address, abi: erc20Abi, functionName: "balanceOf", args: [userAddress ?? "0x"] },
+          ] as const),
+    allowFailure: false,
+    query: { enabled: seededVault !== undefined, staleTime: STALE_TIME, gcTime: STALE_TIME },
+  });
+  const { data: seededMarketState } = useReadContract({
+    address: MORPHO_EDEN_ADDRESS,
+    abi: morphoMarketReadAbi,
+    functionName: "market",
+    args: seededMarketId ? [seededMarketId] : undefined,
+    query: { enabled: seededMarketId !== undefined, staleTime: STALE_TIME, gcTime: STALE_TIME },
+  });
 
   const [tokenPriceInUSD, setTokenPriceInUSD] = useState<number | undefined>(undefined);
-  const { data: usdPrices } = useTokenPrices(chainId, asset?.address ? [asset.address] : []);
+  const pricingAddress = asset?.address ?? seededAsset?.address;
+  const { data: usdPrices } = useTokenPrices(chainId, pricingAddress ? [pricingAddress] : []);
 
   useEffect(() => {
-    if (!usdPrices || !asset?.address) return;
-    setTokenPriceInUSD(usdPrices[asset.address.toLowerCase() as Address]?.price_usd);
-  }, [usdPrices, asset?.address]);
+    if (!usdPrices || !pricingAddress) return;
+    setTokenPriceInUSD(usdPrices[pricingAddress.toLowerCase() as Address]?.price_usd);
+  }, [usdPrices, pricingAddress]);
 
-  if (!currentVault || !currentVaultData || !asset) return null;
+  if (!currentVault || !currentVaultData || !asset) {
+    if (!seededVault || !seededAsset) return null;
+
+    const seededVaultName = (seededVaultSnapshot?.[0] as string | undefined) ?? seededVault.name;
+    const seededVaultTotalAssets = (seededVaultSnapshot?.[1] as bigint | undefined) ?? 0n;
+    const seededVaultTotalSupply = (seededVaultSnapshot?.[2] as bigint | undefined) ?? 0n;
+    const seededVaultUserShares = (seededVaultSnapshot?.[3] as bigint | undefined) ?? 0n;
+    const seededCurators = getDisplayableCurators(
+      {
+        address: seededVault.address,
+        owner: seededVault.owner,
+        curator: seededVault.owner,
+        guardian: seededVault.owner,
+      },
+      topCurators,
+    );
+    const seededMarketTotalSupplyAssets = (seededMarketState?.[0] as bigint | undefined) ?? 0n;
+    const seededSupplyUsd =
+      Number(formatUnits(seededMarketTotalSupplyAssets, seededAsset.decimals ?? 18)) * (tokenPriceInUSD ?? 0);
+
+    return (
+      <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
+        <div className="flex h-full grow justify-center pb-16">
+          <div className="flex w-full max-w-7xl flex-col gap-10 py-3 lg:flex-row lg:px-5">
+            <div className="w-full lg:w-8/12">
+              <VaultHeader />
+              <VaultTitleSection title={seededVaultName} imageSrc={seededAsset.imageSrc ?? ""} />
+              <SeededStatsGrid
+                totalSupply={seededVaultTotalSupply}
+                totalAssets={seededVaultTotalAssets}
+                userShares={seededVaultUserShares}
+                decimals={seededAsset.decimals ?? 18}
+                tokenPriceInUSD={tokenPriceInUSD ?? 0}
+              />
+              <AboutSection />
+              <SeededVaultDetailsGrid asset={seededAsset} owner={seededVault.owner} curators={seededCurators} />
+              <SeededMarketAllocationSection
+                chain={chain}
+                marketId={seededMarketId}
+                collateralAsset={seededCollateralAsset}
+                loanAsset={seededLoanAsset}
+                supplyUsd={seededSupplyUsd}
+              />
+            </div>
+            <div className="w-full lg:w-4/12">
+              {/* 
+              <div className="text-muted-foreground mb-4 rounded-lg border bg-white p-4 text-xs shadow-sm">
+                VaultV2 mode: data is read directly on-chain (ERC4626 + Morpho market), including auto
+                allocate/deallocate behavior.
+              </div>
+              */}
+              <SeededVaultInteractionSection
+                vaultAddress={seededVault.address}
+                seededVault={seededVault}
+                userSharesValue={seededVaultUserShares}
+                asset={seededAsset}
+                onRefresh={() => {
+                  void refetchSeededVaultSnapshot();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full w-[calc(100vw-35px)] flex-col px-2.5 md:w-full">
@@ -668,7 +1329,7 @@ export function VaultSubPage() {
               tokenPriceInUSD={tokenPriceInUSD ?? 0}
               rewards={rewards}
             />
-            {/* <AboutSection /> */}
+            <AboutSection />
             <VaultDetailsGrid vault={currentVault as AccrualVault} asset={asset} curators={curators} />
             <div className="block lg:hidden">
               <InteractionSection

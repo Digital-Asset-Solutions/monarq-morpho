@@ -127,8 +127,8 @@ export const DEPLOYMENTS: Deployments = {
     MetaMorphoV1_1Factory: { address: "0xcDA78f4979d17Ec93052A84A12001fe0088AD734", fromBlock: 978654n },
   },
   [customChains.eden.id]: {
-    Morpho: { address: "0xe3F8380851ee3A0BBcedDD0bCDe92d423812C1Cd", fromBlock: 172586n },
-    MetaMorphoV1_1Factory: { address: "0xb007ca4AD41874640F9458bF3B5e427c31Be7766", fromBlock: 173434n },
+    Morpho: { address: "0xF050a2BB0468FF23cF2964AC182196C94D6815C3", fromBlock: 53363569n },
+    MetaMorphoV1_1Factory: { address: "0x9aaCAA01F5e6BC876D07f023744E3E0A456a64cf", fromBlock: 53366326n },
   },
 };
 

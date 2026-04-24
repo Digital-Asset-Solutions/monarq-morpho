@@ -60,8 +60,14 @@ export const MANUALLY_WHITELISTED_CURATORS: FragmentOf<typeof CuratorFragment>[]
   {
     addresses: [{ address: "0x7554ee28c15e61D9B3CEbcC9F5CAcE7742830B05", chainId: customChains.eden.id }],
     image: "https://via.placeholder.com/32x32/4ade80/ffffff?text=E",
-    name: "Eden Testnet",
-    url: "https://explorer-edennet-1-testnet.binary.builders:8443/",
+    name: "Eden Mainnet",
+    url: "https://eden.blockscout.com/",
+  },
+  {
+    addresses: [{ address: "0xFCB33B700eDED624EEDa067bB4E23FA9bc552823", chainId: customChains.eden.id }],
+    image: "/monarq-brand-kit/Logos/Symbol/PNG/monarq_icon_b.png",
+    name: "Monarq",
+    url: "",
   },
 ];
 

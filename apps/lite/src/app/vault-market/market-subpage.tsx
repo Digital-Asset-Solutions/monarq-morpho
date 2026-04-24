@@ -9,7 +9,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
-import { Address, Chain, erc20Abi, formatUnits, parseUnits } from "viem";
+import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
 import { useReadContracts, useAccount, useReadContract } from "wagmi";
 
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
@@ -17,7 +17,8 @@ import { useMarkets } from "@/hooks/use-markets";
 import { useToken } from "@/hooks/use-token";
 import { useVaults } from "@/hooks/use-vaults";
 import { TRANSACTION_DATA_SUFFIX, MARKET_BLACKLIST } from "@/lib/constants";
-import { DisplayableCurators } from "@/lib/curators";
+import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
+import { getSeededVaultsForMarket } from "@/lib/eden-vaults";
 import { useTokenPrices } from "@/lib/prices";
 
 enum Actions {
@@ -769,6 +770,7 @@ export function MarketSubPage() {
     borrowMarketsArray: markets,
     marketVaults,
     vaultsData,
+    topCurators,
   } = useVaults({
     chainId,
     staleTime: STALE_TIME,
@@ -799,6 +801,47 @@ export function MarketSubPage() {
     markets.find((market) => market.id === marketId) ||
     Object.values(allMarkets).find((market) => market.id === marketId);
   const currentMarketVaults = marketVaults.get(marketId as Address) ?? [];
+  const seededMarketVaults = useMemo(
+    () => getSeededVaultsForMarket(chainId, marketId as Address | undefined),
+    [chainId, marketId],
+  );
+  const { data: seededVaultTotalAssets } = useReadContracts({
+    contracts: seededMarketVaults.map(
+      (vault) =>
+        ({
+          chainId,
+          address: vault.address,
+          abi: erc4626Abi,
+          functionName: "totalAssets",
+        }) as const,
+    ),
+    allowFailure: true,
+    query: {
+      enabled: seededMarketVaults.length > 0,
+      staleTime: STALE_TIME,
+      gcTime: STALE_TIME,
+    },
+  });
+  const mergedMarketVaults = useMemo(() => {
+    const existing = new Set(currentMarketVaults.map((vault) => vault.address.toLowerCase()));
+    const seededFallback = seededMarketVaults
+      .filter((vault) => !existing.has(vault.address.toLowerCase()))
+      .map((vault, index) => ({
+        name: vault.name,
+        address: vault.address,
+        totalAssets: (seededVaultTotalAssets?.[index]?.result as bigint | undefined) ?? 0n,
+        curators: getDisplayableCurators(
+          {
+            address: vault.address,
+            owner: vault.owner,
+            curator: vault.owner,
+            guardian: vault.owner,
+          },
+          topCurators,
+        ),
+      }));
+    return [...currentMarketVaults, ...seededFallback];
+  }, [currentMarketVaults, seededMarketVaults, seededVaultTotalAssets, topCurators]);
 
   // Check if market is blacklisted
   const blacklistedMarkets = chainId ? (MARKET_BLACKLIST[chainId] ?? []) : [];
@@ -879,7 +922,7 @@ export function MarketSubPage() {
                 refetchPosition={refetchPosition}
               />
             </div>
-            <VaultsSection marketVaults={currentMarketVaults} loanToken={loanToken} chain={chain} />
+            <VaultsSection marketVaults={mergedMarketVaults} loanToken={loanToken} chain={chain} />
           </div>
 
           <div className="hidden w-4/12 lg:block">

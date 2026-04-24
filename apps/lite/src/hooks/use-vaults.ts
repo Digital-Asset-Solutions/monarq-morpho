@@ -21,6 +21,8 @@ import { useMarkets } from "@/hooks/use-markets";
 import { useTopNCurators } from "@/hooks/use-top-n-curators";
 import { VAULT_BLACKLIST, MARKET_BLACKLIST } from "@/lib/constants";
 import { type DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
+import { getSeededMarketIds } from "@/lib/eden-markets";
+import { getSeededVaultAddresses, getSeededVaultOwners } from "@/lib/eden-vaults";
 
 const STALE_TIME = 5 * 60 * 1000;
 
@@ -40,6 +42,12 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
     ],
     [chainId],
   );
+  const factoryAddresses = useMemo(() => {
+    const addresses = [factoryV1_1?.address, factory?.address].filter(Boolean) as Address[];
+    if (addresses.length === 0) return undefined;
+    return addresses.length === 1 ? addresses[0] : addresses;
+  }, [factoryV1_1?.address, factory?.address]);
+  const factoriesFromBlock = factory?.fromBlock ?? factoryV1_1?.fromBlock;
 
   // MARK: Index `MetaMorphoFactory.CreateMetaMorpho` on all factory versions to get a list of all vault addresses
   const {
@@ -48,23 +56,43 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
   } = useContractEvents({
     chainId,
     abi: metaMorphoFactoryAbi,
-    address: factoryV1_1 ? [factoryV1_1.address].concat(factory ? [factory.address] : []) : [],
-    fromBlock: factory?.fromBlock ?? factoryV1_1?.fromBlock,
+    address: factoryAddresses,
+    fromBlock: factoriesFromBlock,
     reverseChronologicalOrder: true,
     eventName: "CreateMetaMorpho",
     strict: true,
-    query: { enabled: chainId !== undefined },
+    query: { enabled: chainId !== undefined && factoryAddresses !== undefined && factoriesFromBlock !== undefined },
   });
+
+  const seededVaultAddresses = useMemo(() => getSeededVaultAddresses(chainId), [chainId]);
+  const metaMorphoAddresses = useMemo(
+    () => [...new Set([...createMetaMorphoEvents.map((ev) => ev.args.metaMorpho), ...seededVaultAddresses])],
+    [createMetaMorphoEvents, seededVaultAddresses],
+  );
 
   // MARK: Fetch additional data for vaults owned by the top 1000 curators from core deployments
   const topCurators = useTopNCurators({ n: "all", verifiedOnly: true, chainIds: [...CORE_DEPLOYMENTS] });
+  const seededVaultOwners = useMemo(() => getSeededVaultOwners(chainId), [chainId]);
+  const seededVaultAddressSet = useMemo(
+    () => new Set(seededVaultAddresses.map((address) => address.toLowerCase())),
+    [seededVaultAddresses],
+  );
+  const includedOwners = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...topCurators.flatMap((curator) => curator.addresses?.map((entry) => entry.address as Address) ?? []),
+          ...seededVaultOwners,
+        ]),
+      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+    [topCurators, seededVaultOwners],
+  );
   const { data: vaultsData } = useReadContract({
     chainId,
     ...readAccrualVaults(
       morpho?.address ?? "0x",
-      createMetaMorphoEvents.map((ev) => ev.args.metaMorpho),
-      // NOTE: This assumes that if a curator controls an address on one chain, they control it across all chains.
-      topCurators.flatMap((curator) => curator.addresses?.map((entry) => entry.address as Address) ?? []),
+      metaMorphoAddresses,
+      includedOwners,
       // TODO: For now, we use bytecode deployless reads on TAC, since the RPC doesn't support `stateOverride`.
       //       This means we're forfeiting multicall in this special case, but at least it works. Once we have
       //       a TAC RPC that supports `stateOverride`, remove the special case.
@@ -82,16 +110,22 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
 
   // Logging of whitelisting status to help curators diagnose their situation.
   useEffect(() => {
-    for (const ev of createMetaMorphoEvents) {
-      if (vaultsData?.some((vd) => vd.vault.vault === ev.args.metaMorpho)) continue;
-      console.log(`Skipping vault '${ev.args.name}' (${ev.args.metaMorpho}):
+    for (const metaMorpho of metaMorphoAddresses) {
+      if (vaultsData?.some((vd) => vd.vault.vault === metaMorpho)) continue;
+      // Seeded VaultV2 entries are handled by dedicated fallback paths, so this warning is noisy for them.
+      if (seededVaultAddressSet.has(metaMorpho.toLowerCase())) continue;
+      console.log(`Skipping vault (${metaMorpho}):
 - ❌ owner is not whitelisted
 `);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vaultsData]);
+  }, [vaultsData, metaMorphoAddresses, seededVaultAddressSet]);
 
-  const marketIds = useMemo(() => [...new Set(vaultsData?.flatMap((d) => d.vault.withdrawQueue) ?? [])], [vaultsData]);
+  const seededMarketIds = useMemo(() => getSeededMarketIds(chainId), [chainId]);
+
+  const marketIds = useMemo(
+    () => [...new Set([...(vaultsData?.flatMap((d) => d.vault.withdrawQueue) ?? []), ...seededMarketIds])],
+    [vaultsData, seededMarketIds],
+  );
   const markets = useMarkets({ chainId, marketIds, staleTime, fetchPrices });
 
   const vaults = useMemo(() => {
@@ -166,21 +200,23 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
   // For borrow page: extract market IDs for enabled allocations with supply shares
   const borrowMarketIds = useMemo(
     () => [
-      ...new Set(
-        vaultsData?.flatMap((d) =>
+      ...new Set([
+        ...(vaultsData?.flatMap((d) =>
           d.allocations
             .filter((alloc) => alloc.config.enabled && alloc.position.supplyShares > 0n)
             .map((alloc) => alloc.id),
-        ) ?? [],
-      ),
+        ) ?? []),
+        ...seededMarketIds,
+      ]),
     ],
-    [vaultsData],
+    [vaultsData, seededMarketIds],
   );
 
   const borrowMarkets = useMarkets({ chainId, marketIds: borrowMarketIds, staleTime, fetchPrices });
 
   const borrowMarketsArray = useMemo(() => {
     const blacklistedMarkets = chainId ? (MARKET_BLACKLIST[chainId] ?? []) : [];
+    const seededMarketSet = new Set(seededMarketIds.map((id) => id.toLowerCase()));
 
     // Debug logging
     // console.log(`[useVaults] Chain ID: ${chainId}`);
@@ -193,8 +229,9 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
         return false;
       }
 
+      const isSeededMarket = seededMarketSet.has(market.id.toLowerCase());
       return (
-        market.totalSupplyAssets > 0n &&
+        (isSeededMarket || market.totalSupplyAssets > 0n) &&
         ![market.params.collateralToken, market.params.loanToken, market.params.irm, market.params.oracle].includes(
           zeroAddress,
         )
@@ -206,7 +243,7 @@ export function useVaults({ chainId, staleTime = STALE_TIME, fetchPrices, userAd
       return primary === 0 ? secondary : primary;
     });
     return marketsArr;
-  }, [borrowMarkets, chainId]);
+  }, [borrowMarkets, chainId, seededMarketIds]);
 
   const marketVaults = useMemo(() => {
     const map = new Map<
