@@ -9,6 +9,7 @@ import svgr from "vite-plugin-svgr";
 export default defineConfig({
   plugins: [svgr(), tailwindcss(), react()],
   resolve: {
+    dedupe: ["react", "react-dom", "wagmi"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
