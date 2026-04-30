@@ -17,6 +17,18 @@ function validateTokenAmountInput(input: string, maxDecimals: number): string | 
   return decimalIndex > -1 ? input.slice(0, decimalIndex + maxDecimals + 1) : input;
 }
 
+function trimTrailingZeroes(value: string): string {
+  if (!value.includes(".")) return value;
+  return value.replace(/\.?0+$/, "");
+}
+
+function clampDisplayDecimals(value: string, maxDecimals: number): string {
+  if (!value.includes(".")) return value;
+  const [intPart, fracPart = ""] = value.split(".");
+  const clamped = fracPart.slice(0, maxDecimals);
+  return trimTrailingZeroes(clamped.length > 0 ? `${intPart}.${clamped}` : intPart);
+}
+
 export function TokenAmountInput({
   decimals,
   maxInputDecimals,
@@ -34,7 +46,11 @@ export function TokenAmountInput({
   symbol?: string;
   onChange: (value: string) => void;
 }) {
-  const textMaxValue = maxValue !== undefined && decimals !== undefined ? formatUnits(maxValue, decimals) : undefined;
+  const effectiveMaxInputDecimals = maxInputDecimals ?? decimals ?? 18;
+  const textMaxValueRaw =
+    maxValue !== undefined && decimals !== undefined ? formatUnits(maxValue, decimals) : undefined;
+  const textMaxValue =
+    textMaxValueRaw !== undefined ? clampDisplayDecimals(textMaxValueRaw, effectiveMaxInputDecimals) : undefined;
   const usdValue = usdPrice && parseFloat(value) > 0 ? parseFloat(value) * usdPrice : undefined;
 
   return (
@@ -45,7 +61,6 @@ export function TokenAmountInput({
         placeholder="0"
         value={value}
         onChange={(ev) => {
-          const effectiveMaxInputDecimals = maxInputDecimals ?? decimals ?? 18;
           const validValue = validateTokenAmountInput(ev.target.value, effectiveMaxInputDecimals);
           if (validValue != null) onChange(validValue);
         }}
