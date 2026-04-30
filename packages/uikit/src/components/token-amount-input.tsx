@@ -19,6 +19,7 @@ function validateTokenAmountInput(input: string, maxDecimals: number): string | 
 
 export function TokenAmountInput({
   decimals,
+  maxInputDecimals,
   value,
   maxValue,
   usdPrice,
@@ -26,6 +27,7 @@ export function TokenAmountInput({
   onChange,
 }: {
   decimals?: number;
+  maxInputDecimals?: number;
   value: string;
   maxValue?: bigint;
   usdPrice?: number;
@@ -43,7 +45,8 @@ export function TokenAmountInput({
         placeholder="0"
         value={value}
         onChange={(ev) => {
-          const validValue = validateTokenAmountInput(ev.target.value, decimals ?? 18);
+          const effectiveMaxInputDecimals = maxInputDecimals ?? decimals ?? 18;
+          const validValue = validateTokenAmountInput(ev.target.value, effectiveMaxInputDecimals);
           if (validValue != null) onChange(validValue);
         }}
         disabled={decimals === undefined}

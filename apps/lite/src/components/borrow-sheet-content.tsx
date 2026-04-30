@@ -19,10 +19,11 @@ import { tryFormatBalance, formatLtv, Token, min } from "@morpho-org/uikit/lib/u
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowRight, CircleArrowLeft } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { Address, erc20Abi, parseUnits } from "viem";
+import { Address, erc20Abi } from "viem";
 import { useAccount, useChainId, useReadContract, useReadContracts } from "wagmi";
 
 import { RISKS_DOCUMENTATION, TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
+import { getTokenInputMaxDecimals, parseTokenInput } from "@/lib/token-input";
 
 enum Actions {
   SupplyCollateral = "Supply",
@@ -163,9 +164,10 @@ export function BorrowSheetContent({
     );
     return {
       token,
-      inputValue: token?.decimals !== undefined ? parseUnits(textInputValue, token.decimals) : undefined,
+      inputValue: parseTokenInput(textInputValue, token?.decimals),
     };
   }, [textInputValue, selectedTab, tokens, marketParams]);
+  const maxInputDecimals = getTokenInputMaxDecimals(token?.decimals);
 
   let withdrawCollateralMax = accrualPosition?.withdrawableCollateral;
   if (withdrawCollateralMax !== undefined && accrualPosition!.borrowAssets > 0n) {
@@ -345,6 +347,7 @@ export function BorrowSheetContent({
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={balances?.[0]}
               onChange={setTextInputValue}
@@ -376,6 +379,7 @@ export function BorrowSheetContent({
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={withdrawCollateralMax}
               onChange={setTextInputValue}
@@ -393,6 +397,7 @@ export function BorrowSheetContent({
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={borrowMax}
               onChange={setTextInputValue}
@@ -410,6 +415,7 @@ export function BorrowSheetContent({
             </div>
             <TokenAmountInput
               decimals={token?.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={repayMax !== undefined && balances?.[1] ? min(repayMax, balances[1]) : repayMax}
               onChange={setTextInputValue}
