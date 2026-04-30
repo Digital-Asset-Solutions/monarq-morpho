@@ -30,6 +30,7 @@ import { useBorrowFilters } from "@/hooks/use-borrow-filters";
 import { type useMerklOpportunities } from "@/hooks/use-merkl-opportunities";
 import { SHARED_LIQUIDITY_DOCUMENTATION } from "@/lib/constants";
 import { type DisplayableCurators } from "@/lib/curators";
+import { getHealthFactorPercent } from "@/lib/health-factor";
 
 function TokenTableCell({ address, symbol, imageSrc, chain }: Token & { chain: Chain | undefined }) {
   return (
@@ -81,24 +82,32 @@ function HealthTableCell({
   collateralToken: Token;
   loanToken: Token;
 }) {
-  const ltvText = position?.accrueInterest().ltv !== undefined ? formatLtv(position.accrueInterest().ltv ?? 0n) : "－";
+  const accruedPosition = position?.accrueInterest();
+  const ltvText = accruedPosition?.ltv !== undefined ? formatLtv(accruedPosition.ltv ?? 0n) : "－";
   const lltvText = formatLtv(market.params.lltv);
+  const healthFactor = getHealthFactorPercent(accruedPosition?.ltv, market.params.lltv);
+  const healthFactorText = healthFactor !== undefined ? `${healthFactor.toFixed(1)}%` : "－";
   const lPriceText =
-    typeof position?.liquidationPrice === "bigint" &&
+    typeof accruedPosition?.liquidationPrice === "bigint" &&
     loanToken.decimals !== undefined &&
     collateralToken.decimals !== undefined
-      ? formatBalanceWithSymbol(position.liquidationPrice, 36 + loanToken.decimals - collateralToken.decimals, "", 5)
+      ? formatBalanceWithSymbol(
+          accruedPosition.liquidationPrice,
+          36 + loanToken.decimals - collateralToken.decimals,
+          "",
+          5,
+        )
       : "－";
   const priceDropText =
-    typeof position?.priceVariationToLiquidationPrice === "bigint"
-      ? formatLtv(position.priceVariationToLiquidationPrice)
+    typeof accruedPosition?.priceVariationToLiquidationPrice === "bigint"
+      ? formatLtv(accruedPosition.priceVariationToLiquidationPrice)
       : "－";
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="hover:bg-primary ml-[-8px] flex w-min items-center gap-2 rounded-sm p-2">
-            {ltvText} / {lltvText}
+            {healthFactorText}
           </div>
         </TooltipTrigger>
         <TooltipContent
@@ -106,6 +115,10 @@ function HealthTableCell({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex w-[240px] flex-col gap-3">
+            <div className="flex justify-between">
+              Health Factor
+              <span>{healthFactorText}</span>
+            </div>
             <div className="flex justify-between">
               LTV / Liq. LTV
               <span>

@@ -37,6 +37,7 @@ import { TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
 import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 import { getSeededVaults, type SeededVault } from "@/lib/eden-vaults";
 import { useTokenPrices } from "@/lib/prices";
+import { getTokenInputMaxDecimals, parseTokenInput } from "@/lib/token-input";
 
 enum Actions {
   Deposit = "Deposit",
@@ -613,7 +614,8 @@ function InteractionSection({
     allowFailure: false,
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
-  const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
+  const inputValue = parseTokenInput(textInputValue, asset.decimals);
+  const maxInputDecimals = getTokenInputMaxDecimals(asset.decimals);
 
   // Compute user's deposit as asset equivalent of shares; this matches dashboard logic
   // Only compute when we have valid user shares, otherwise show 0
@@ -710,6 +712,7 @@ function InteractionSection({
               </div>
               <TokenAmountInput
                 decimals={asset.decimals}
+                maxInputDecimals={maxInputDecimals}
                 value={textInputValue}
                 symbol={asset.symbol ?? ""}
                 maxValue={maxes?.[2]}
@@ -758,6 +761,7 @@ function InteractionSection({
               </div>
               <TokenAmountInput
                 decimals={asset.decimals}
+                maxInputDecimals={maxInputDecimals}
                 value={textInputValue}
                 maxValue={maxes?.[0]}
                 symbol={asset.symbol ?? ""}
@@ -927,8 +931,9 @@ function SeededVaultInteractionSection({
   const effectiveMaxDeallocate =
     previewRedeemForAllShares < marketAvailableLiquidity ? previewRedeemForAllShares : marketAvailableLiquidity;
 
-  const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
-  const manageInput = asset.decimals !== undefined ? parseUnits(manageInputValue, asset.decimals) : undefined;
+  const inputValue = parseTokenInput(textInputValue, asset.decimals);
+  const manageInput = parseTokenInput(manageInputValue, asset.decimals);
+  const maxInputDecimals = getTokenInputMaxDecimals(asset.decimals);
   const hasEnoughBalanceForDeposit =
     selectedTab === Actions.Deposit
       ? inputValue !== undefined && inputValue > 0n && maxes?.[1] !== undefined && maxes[1] >= inputValue
@@ -1041,6 +1046,7 @@ function SeededVaultInteractionSection({
             </div>
             <TokenAmountInput
               decimals={asset.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               symbol={asset.symbol ?? ""}
               maxValue={maxes?.[1]}
@@ -1088,6 +1094,7 @@ function SeededVaultInteractionSection({
             </div>
             <TokenAmountInput
               decimals={asset.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={effectiveMaxWithdraw}
               symbol={asset.symbol ?? ""}
@@ -1147,6 +1154,7 @@ function SeededVaultInteractionSection({
             <div className="mt-3">
               <TokenAmountInput
                 decimals={asset.decimals}
+                maxInputDecimals={maxInputDecimals}
                 value={manageInputValue}
                 symbol={asset.symbol ?? ""}
                 maxValue={effectiveMaxDeallocate}

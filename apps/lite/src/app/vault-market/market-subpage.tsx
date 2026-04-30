@@ -9,7 +9,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router";
-import { Address, Chain, erc20Abi, erc4626Abi, formatUnits, parseUnits } from "viem";
+import { Address, Chain, erc20Abi, erc4626Abi, formatUnits } from "viem";
 import { useReadContracts, useAccount, useReadContract } from "wagmi";
 
 import { SortableTableHead, type SortDirection, useSorting, createSortHandler } from "@/components/sortable-table-head";
@@ -19,7 +19,9 @@ import { useVaults } from "@/hooks/use-vaults";
 import { TRANSACTION_DATA_SUFFIX, MARKET_BLACKLIST } from "@/lib/constants";
 import { DisplayableCurators, getDisplayableCurators } from "@/lib/curators";
 import { getSeededVaultsForMarket } from "@/lib/eden-vaults";
+import { getHealthFactorPercent } from "@/lib/health-factor";
 import { useTokenPrices } from "@/lib/prices";
+import { getTokenInputMaxDecimals, parseTokenInput } from "@/lib/token-input";
 
 enum Actions {
   SupplyCollateral = "Supply Collateral",
@@ -382,8 +384,8 @@ function InteractionSection({
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
 
-  const inputValue =
-    currentToken.decimals !== undefined ? parseUnits(textInputValue, currentToken.decimals) : undefined;
+  const inputValue = parseTokenInput(textInputValue, currentToken.decimals);
+  const maxInputDecimals = getTokenInputMaxDecimals(currentToken.decimals);
 
   // Calculate max values based on action
   const getMaxValue = () => {
@@ -570,10 +572,7 @@ function InteractionSection({
   const shouldShowBorrowProjection =
     !!inputValue && inputValue > 0n && [Actions.Borrow, Actions.Repay].includes(selectedTab);
 
-  const healthFactor =
-    position?.ltv !== undefined && position.ltv !== null && market.params.lltv > 0n
-      ? Number(formatUnits(market.params.lltv - position.ltv, 18)) * 100
-      : 100;
+  const healthFactor = getHealthFactorPercent(position?.ltv, market.params.lltv) ?? 100;
 
   return (
     <div className="flex flex-col gap-6">
@@ -615,7 +614,8 @@ function InteractionSection({
                   </span>
                 </div>
                 <TokenAmountInput
-                  decimals={currentToken.decimals ?? 18}
+                  decimals={currentToken.decimals}
+                  maxInputDecimals={maxInputDecimals}
                   value={textInputValue}
                   symbol={currentToken.symbol ?? ""}
                   maxValue={maxValue}

@@ -14,10 +14,11 @@ import { formatBalance, Token } from "@morpho-org/uikit/lib/utils";
 import { keepPreviousData } from "@tanstack/react-query";
 import { CircleArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { Address, erc20Abi, erc4626Abi, parseUnits } from "viem";
+import { Address, erc20Abi, erc4626Abi } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
 import { RISKS_DOCUMENTATION, TRANSACTION_DATA_SUFFIX } from "@/lib/constants";
+import { getTokenInputMaxDecimals, parseTokenInput } from "@/lib/token-input";
 
 enum Actions {
   Deposit = "Deposit",
@@ -53,7 +54,8 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
     query: { enabled: !!userAddress, staleTime: 1 * 60 * 1000, placeholderData: keepPreviousData },
   });
 
-  const inputValue = asset.decimals !== undefined ? parseUnits(textInputValue, asset.decimals) : undefined;
+  const inputValue = parseTokenInput(textInputValue, asset.decimals);
+  const maxInputDecimals = getTokenInputMaxDecimals(asset.decimals);
   const isMaxed = inputValue === maxes?.[0];
 
   const approvalTxnConfig =
@@ -141,6 +143,7 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
             </div>
             <TokenAmountInput
               decimals={asset.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={maxes?.[2]}
               onChange={setTextInputValue}
@@ -175,6 +178,7 @@ export function EarnSheetContent({ vaultAddress, asset }: { vaultAddress: Addres
             </div>
             <TokenAmountInput
               decimals={asset.decimals}
+              maxInputDecimals={maxInputDecimals}
               value={textInputValue}
               maxValue={maxes?.[0]}
               onChange={setTextInputValue}
